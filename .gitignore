@@ -1,0 +1,43 @@
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python / FastAPI
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Next.js
+node_modules/
+.next/
+out/
+
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# AI datasets and model weights
+ml/**/data/
+*.pt
+*.pth
+*.onnx
+*.joblib
+*.pkl
+
+# Docker local data
+postgres-data/
+minio-data/
+
+# IDE / OS
+.idea/
+.DS_Store
+Thumbs.db
