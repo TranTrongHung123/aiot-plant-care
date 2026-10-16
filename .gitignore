@@ -1,43 +1,131 @@
-
-# Environment variables
+# Biến môi trường và bí mật cục bộ
 .env
 .env.*
 !.env.example
+.envrc
+.direnv/
+kaggle.json
+access_token
+.kaggle/
+credentials.json
+client_secret*.json
+service-account*.json
+*.key
+*.pem
+*.p12
+*.pfx
+.netrc
+.pypirc
 
-# Python / FastAPI
+# Python / FastAPI và cache kiểm thử
 .venv/
+venv/
 __pycache__/
-*.pyc
+*.py[cod]
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
+.hypothesis/
+.tox/
+.nox/
+*.egg-info/
+.coverage
+.coverage.*
+htmlcov/
+coverage/
+*.lcov
 
-# Next.js
+# Database cục bộ và file journal/WAL
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.dump
+*.backup
+
+# Log, tiến trình demo và kết quả kiểm thử trình duyệt
+*.log
+*.log.*
+*.pid
+*.pid.lock
+logs/
+.runtime/
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+frontend/playwright/.cache/
+
+# Dependency và sản phẩm build
 node_modules/
 .next/
+.vercel/
 out/
+build/
+dist/
+*.tsbuildinfo
 
 # PlatformIO
 .pio/
 .pioenvs/
 .piolibdeps/
 
-# VS Code
+# Cấu hình IDE cá nhân
 .vscode/
 *.code-workspace
+.idea/
 
-# AI datasets and model weights
+# Dataset, checkpoint và kết quả huấn luyện cục bộ
+/data/
+/datasets/
 ml/**/data/
+ml/**/datasets/
+ml/**/outputs/
+ml/**/checkpoints/
+ml/**/runs/
+ml/**/artifacts/
+ml/**/Ultralytics/
+model-artifacts/
 *.pt
 *.pth
 *.onnx
 *.joblib
 *.pkl
+*.ubj
+*.ckpt
+*.safetensors
+*.h5
+*.hdf5
+*.tflite
+*.engine
 
-# Docker local data
+# Bản đóng gói mã nguồn/dataset/model tải về máy
+*.zip
+*.7z
+*.tar
+*.tar.gz
+*.tgz
+
+# Dữ liệu Docker và bản sao lưu cục bộ
 postgres-data/
 minio-data/
+backups/
 
-# IDE / OS
-.idea/
+# File hệ điều hành và file tạm của editor
 .DS_Store
 Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# Notebook và cache công cụ
+.ipynb_checkpoints/
+.cache/
+.taste-skill/
+
+# Skill và hướng dẫn agent cục bộ (giữ lựa chọn sẵn có của workspace)
+.agents/
+AGENTS.md
+/skills-lock.json

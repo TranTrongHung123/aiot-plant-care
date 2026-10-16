@@ -1,0 +1,9 @@
+data/
+outputs/
+checkpoints/
+dist/
+.venv/
+.ipynb_checkpoints/
+*.zip
+kaggle.json
+access_token

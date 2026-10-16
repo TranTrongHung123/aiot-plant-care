@@ -1,0 +1,7 @@
+data/
+outputs/
+dist/
+.venv/
+.ipynb_checkpoints/
+*.ubj
+*.zip
