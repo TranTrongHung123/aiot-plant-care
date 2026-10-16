@@ -1,0 +1,4 @@
+# Torch và cây dependency của nó thuộc runtime Colab, nằm ngoài lock bổ sung.
+torch
+torchvision
+nvidia-nccl-cu12

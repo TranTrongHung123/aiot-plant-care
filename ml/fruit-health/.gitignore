@@ -1,0 +1,10 @@
+data/
+outputs/
+checkpoints/
+dist/
+.runtime/
+Ultralytics/
+.venv/
+.ipynb_checkpoints/
+*.zip
+*.cache

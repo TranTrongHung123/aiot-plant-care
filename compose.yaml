@@ -1,0 +1,78 @@
+name: aiot-plant-care
+
+services:
+  postgres:
+    image: postgres:17-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      TZ: UTC
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  minio:
+    build:
+      context: ./infra/minio
+    image: aiot-plant-care/minio:2025-10-15-local
+    restart: unless-stopped
+    command: [server, /data, --console-address, ':9001']
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD}
+    ports:
+      - "127.0.0.1:${MINIO_API_PORT:-9000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: [CMD, curl, -fsS, http://localhost:9000/minio/health/ready]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  minio-init:
+    image: aiot-plant-care/minio:2025-10-15-local
+    pull_policy: never
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: 'no'
+    entrypoint: [/bin/sh, /bootstrap/init.sh]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD}
+      MINIO_APP_USER: ${MINIO_APP_USER:?Set MINIO_APP_USER}
+      MINIO_APP_PASSWORD: ${MINIO_APP_PASSWORD:?Set MINIO_APP_PASSWORD}
+    volumes:
+      - ./infra/minio/init.sh:/bootstrap/init.sh:ro
+      - ./infra/minio/app-policy.json:/bootstrap/app-policy.json:ro
+
+  mqtt:
+    image: eclipse-mosquitto:2.0
+    profiles: [local-mqtt]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MQTT_LOCAL_PORT:-1883}:1883"
+    volumes:
+      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mqtt-data:/mosquitto/data
+    healthcheck:
+      test: [CMD, mosquitto_pub, -h, localhost, -t, healthcheck, -m, ok]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+volumes:
+  postgres-data:
+  minio-data:
+  mqtt-data:

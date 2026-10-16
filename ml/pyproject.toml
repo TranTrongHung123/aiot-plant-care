@@ -1,0 +1,7 @@
+# Dependency bổ sung ở requirements-colab.in/.lock; Torch do Colab quản lý.
+[tool.pytest.ini_options]
+pythonpath = [".", "scripts", "leaf-disease", "fruit-health", "weather"]
+testpaths = ["leaf-disease/tests", "fruit-health/tests", "weather/tests", "tests"]
+
+[tool.ruff]
+target-version = "py312"
