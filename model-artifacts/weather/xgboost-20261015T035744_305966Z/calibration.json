@@ -1,0 +1,6 @@
+{
+  "method": "sigmoid_logit",
+  "coefficient": 1.0227634303152136,
+  "intercept": -1.084006117970318,
+  "clip_epsilon": 1e-06
+}

@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "model_version": "xgboost-20261015T035744_305966Z",
+  "model_source": "trained",
+  "is_mock": false,
+  "smoke_only": false,
+  "production_ready": false,
+  "created_at": "2026-10-15T03:57:51.327611+00:00",
+  "feature_names": [
+    "temperature_c",
+    "humidity_pct",
+    "surface_pressure_hpa",
+    "cloud_cover_pct",
+    "wind_speed_ms",
+    "temperature_c_lag1h",
+    "temperature_c_lag3h",
+    "temperature_c_mean6h",
+    "temperature_c_change3h",
+    "humidity_pct_lag1h",
+    "humidity_pct_lag3h",
+    "humidity_pct_mean6h",
+    "humidity_pct_change3h",
+    "surface_pressure_hpa_lag1h",
+    "surface_pressure_hpa_lag3h",
+    "surface_pressure_hpa_mean6h",
+    "surface_pressure_hpa_change3h",
+    "cloud_cover_pct_lag1h",
+    "cloud_cover_pct_lag3h",
+    "cloud_cover_pct_mean6h",
+    "cloud_cover_pct_change3h",
+    "wind_speed_ms_lag1h",
+    "wind_speed_ms_lag3h",
+    "wind_speed_ms_mean6h",
+    "wind_speed_ms_change3h",
+    "hour_sin",
+    "hour_cos",
+    "day_of_year_sin",
+    "day_of_year_cos"
+  ],
+  "feature_config": {
+    "rain_threshold_mm": 0.1,
+    "horizon_minutes": 60,
+    "display_timezone": "Asia/Ho_Chi_Minh",
+    "schema_version": 1
+  },
+  "training_config": {
+    "seed": 42,
+    "num_boost_round": 500,
+    "early_stopping_rounds": 30,
+    "max_depth": 4,
+    "learning_rate": 0.05,
+    "nthread": 2,
+    "device": "cpu",
+    "smoke": false
+  },
+  "threshold": 0.36999999999999994,
+  "train_prior": 0.2664910258521324,
+  "best_iteration": 392,
+  "target": "precipitation_next_60m",
+  "target_interval": "(t, t+60m]",
+  "rain_proxy": true,
+  "label_definition": "precipitation[t+1h] >= 0.1 mm",
+  "split_manifest": {
+    "train": {
+      "rows": 30365,
+      "start": "2020-12-31T22:00:00+00:00",
+      "end": "2024-06-19T02:00:00+00:00",
+      "fingerprint": "c005cd293d21d06f5cded67dd32f0a18d662f1bfb8b46f88da2e520298f73b87"
+    },
+    "early_stop": {
+      "rows": 5054,
+      "start": "2024-06-19T10:00:00+00:00",
+      "end": "2025-01-15T23:00:00+00:00",
+      "fingerprint": "5ec8524448c2a9e49a0479e769531c602b71daf5e75a558479b41c5f17237363"
+    },
+    "calibration": {
+      "rows": 5054,
+      "start": "2025-01-16T07:00:00+00:00",
+      "end": "2025-08-14T20:00:00+00:00",
+      "fingerprint": "c124b72e9b82824ac801e2a1996bbaa621e695df958b62596b402e7e1b776a6f"
+    },
+    "threshold": {
+      "rows": 5054,
+      "start": "2025-08-15T04:00:00+00:00",
+      "end": "2026-03-13T17:00:00+00:00",
+      "fingerprint": "f9856cac8911d011d30385001fad2d02c9fc3611ce57034fa0172b58a789ef87"
+    },
+    "test": {
+      "rows": 5055,
+      "start": "2026-03-14T01:00:00+00:00",
+      "end": "2026-10-10T15:00:00+00:00",
+      "fingerprint": "7e580c38a239fd9759e0fd70a4aabfb97caf91298bd02139f957354a98a3e098"
+    }
+  },
+  "data_fingerprint": "4cc4fc1ad3ddb1d1b0c5f879cdff5ea5099f317ee0c31785c6d9a2f3d6e8e026",
+  "embargo_hours": 6,
+  "provenance": {
+    "provider": "open_meteo_archive",
+    "source_kind": "historical_reconstruction",
+    "csv_metadata": {
+      "latitude": "20.984182",
+      "longitude": "105.79108",
+      "elevation": "8.0",
+      "utc_offset_seconds": "25200",
+      "timezone": "Asia/Bangkok",
+      "timezone_abbreviation": "GMT+7"
+    },
+    "sha256": "01daa9b549b34e77d1ae2c01ce90ca045e7f9c2c1312ce5f0159e040a74e7215",
+    "units": {
+      "temperature_c": "degC",
+      "humidity_pct": "%",
+      "surface_pressure_hpa": "hPa",
+      "cloud_cover_pct": "%",
+      "wind_speed_ms": "m/s",
+      "precipitation_mm": "mm/preceding_hour"
+    },
+    "audit": {
+      "rows": 50616,
+      "duplicate_rows_removed": 0,
+      "missing_hours": 0,
+      "invalid_values": {
+        "temperature_c": 0,
+        "humidity_pct": 0,
+        "surface_pressure_hpa": 0,
+        "cloud_cover_pct": 0,
+        "wind_speed_ms": 0,
+        "precipitation_mm": 0
+      },
+      "missing_values": {
+        "temperature_c": 0,
+        "humidity_pct": 0,
+        "surface_pressure_hpa": 0,
+        "cloud_cover_pct": 0,
+        "wind_speed_ms": 0,
+        "precipitation_mm": 0
+      },
+      "start_utc": "2020-12-31T17:00:00+00:00",
+      "end_utc": "2026-10-10T16:00:00+00:00"
+    },
+    "availability": "Không có thời điểm từng giá trị thực sự sẵn có trong quá khứ."
+  },
+  "environment": {
+    "xgboost": "3.0.5",
+    "numpy": "2.1.3",
+    "pandas": "2.2.3",
+    "scikit-learn": "1.6.1"
+  },
+  "artifact_sha256": {
+    "model.ubj": "e3c752dad25f1bcbb81f315044cc81e3a5c0aa7fb62ca0015e10ed1c74083d05",
+    "calibration.json": "38cc530054b1988d4077324e86528440eb4770066cc9d8e6285c22a8d5c7f3fc",
+    "feature_config.json": "48d659f37b7e88a33f4263d69814fd4567d90b457cff6746eb38c892eaf379bf"
+  },
+  "limitations": [
+    "precipitation gồm cả tuyết; đây là nhãn đại diện cho mưa",
+    "Đánh giá hồi cứu trên dữ liệu tái dựng, chưa chứng minh thời điểm sẵn có",
+    "Chưa đánh giá sai lệch nguồn OpenWeather/cảm biến tại cây"
+  ]
+}

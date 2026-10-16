@@ -1,0 +1,16 @@
+{
+  "config": {
+    "epochs": 80,
+    "imgsz": 640,
+    "batch": 16,
+    "workers": 2,
+    "patience": 15,
+    "seed": 42,
+    "confidence": 0.25,
+    "nms_iou": 0.7,
+    "max_det": 300,
+    "smoke": false
+  },
+  "data_yaml": "/content/aiot-data/fruit-prepared-full/data.yaml",
+  "fingerprint": "5e8b68777e70dfb513b2ade1d37cb02b8b6550b92f4542942858bfac9800c301"
+}

@@ -86,7 +86,7 @@ ml/**/checkpoints/
 ml/**/runs/
 ml/**/artifacts/
 ml/**/Ultralytics/
-model-artifacts/
+# model-artifacts/
 *.pt
 *.pth
 *.onnx

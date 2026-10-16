@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "model_version": "full-20261015T040727_579719Z",
+  "architecture": "yolo11n",
+  "task": "fruit_ripeness_detection",
+  "model_source": "trained",
+  "is_mock": false,
+  "smoke_only": false,
+  "production_ready": false,
+  "names": [
+    "ripe",
+    "unripe"
+  ],
+  "created_at": "2026-10-15T04:56:53.931181+00:00",
+  "training_config": {
+    "epochs": 80,
+    "imgsz": 640,
+    "batch": 16,
+    "workers": 2,
+    "patience": 15,
+    "seed": 42,
+    "confidence": 0.25,
+    "nms_iou": 0.7,
+    "max_det": 300,
+    "smoke": false
+  },
+  "selection_metric": "validation_mAP50_95",
+  "dataset_fingerprint": "5e8b68777e70dfb513b2ade1d37cb02b8b6550b92f4542942858bfac9800c301",
+  "source_url": "https://universe.roboflow.com/uni-zkvyc/tomato-ripeness-um0yl/dataset/4",
+  "source_label_conversion": "YOLO polygons to enclosing axis-aligned boxes",
+  "environment": {
+    "torch": "2.11.0+cu128",
+    "torchvision": "0.26.0+cu128",
+    "ultralytics": "8.3.203",
+    "numpy": "2.1.3"
+  },
+  "artifact_sha256": {
+    "best.pt": "cbf9a4fd505e7f3b55934abb9432255c12ce67cd437da15e50eec0cc419fb55f",
+    "class_mapping.json": "4f11d29cd1f01920d383773053c861363c87c96b8c800b4d68f75869aa6d1222",
+    "preprocessing.json": "3509d78499111f07c3f41b4b4aa88bdaaba60aec17f5109cd85d2900e9313683"
+  },
+  "limitations": [
+    "Chưa đánh giá ảnh ESP32-CAM",
+    "Chỉ có ripe/unripe, không nhận diện bệnh quả",
+    "Đếm trong từng ảnh, không tracking danh tính quả qua thời gian",
+    "Raw dataset đã stretch 640x640; ảnh camera có domain shift"
+  ]
+}

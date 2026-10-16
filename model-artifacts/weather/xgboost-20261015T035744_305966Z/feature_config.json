@@ -1,0 +1,6 @@
+{
+  "rain_threshold_mm": 0.1,
+  "horizon_minutes": 60,
+  "display_timezone": "Asia/Ho_Chi_Minh",
+  "schema_version": 1
+}

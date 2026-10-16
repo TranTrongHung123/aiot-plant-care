@@ -1,0 +1,15 @@
+{
+  "imgsz": 640,
+  "color": "RGB",
+  "resize": "letterbox",
+  "rect": false,
+  "scale": 0.00392156862745098,
+  "confidence": 0.25,
+  "nms_iou": 0.7,
+  "max_det": 300,
+  "box_format": "xyxy",
+  "normalized_box_range": [
+    0,
+    1
+  ]
+}
