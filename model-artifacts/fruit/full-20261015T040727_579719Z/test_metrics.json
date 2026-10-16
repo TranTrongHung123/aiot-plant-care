@@ -1,0 +1,35 @@
+{
+  "model_version": "full-20261015T040727_579719Z",
+  "split": "test",
+  "evaluated_at": "2026-10-15T10:40:45.073400+00:00",
+  "images": 1254,
+  "mAP50": 0.9287094118580556,
+  "mAP50_95": 0.7673929470860636,
+  "precision": 0.9373591133864805,
+  "recall": 0.8619864817739546,
+  "per_class": {
+    "ripe": {
+      "precision": 0.9338542434384431,
+      "recall": 0.9083532355775789,
+      "mAP50": 0.959094068329648,
+      "mAP50_95": 0.802164387944696
+    },
+    "unripe": {
+      "precision": 0.9408639833345178,
+      "recall": 0.8156197279703304,
+      "mAP50": 0.8983247553864631,
+      "mAP50_95": 0.7326215062274313
+    }
+  },
+  "count_confidence": 0.25,
+  "nms_iou": 0.7,
+  "count_mae": 0.3317384370015949,
+  "count_rmse": 1.3209150566640726,
+  "count_bias": -0.02073365231259968,
+  "class_count_mae": {
+    "ripe": 0.13476874003189793,
+    "unripe": 0.23365231259968103
+  },
+  "max_det": 300,
+  "precision_recall_note": "P/R là thống kê tại điểm F1 tốt nhất trên tập đang đánh giá; không dùng để đổi ngưỡng. Count dùng confidence cố định từ artifact."
+}

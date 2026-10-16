@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "architecture": "mobilenet_v3_large",
+  "num_classes": 10,
+  "model_version": "mobilenetv3-20261015T031708_509896Z",
+  "source": "trained",
+  "smoke_only": false,
+  "pretrained": "IMAGENET1K_V2",
+  "created_at": "2026-10-15T03:17:08.767699+00:00",
+  "config": {
+    "seed": 42,
+    "epochs": 20,
+    "warmup_epochs": 2,
+    "batch_size": 32,
+    "workers": 2,
+    "head_lr": 0.001,
+    "finetune_lr": 0.0001,
+    "weight_decay": 0.0001,
+    "patience": 5,
+    "min_delta": 0.0001,
+    "imbalance_threshold": 2.0,
+    "amp": true,
+    "pretrained": true,
+    "smoke": false
+  },
+  "fingerprint": "d81d0e3f45db37d222160265ed9707a9ecc5d964f6355feb44e03ac2257bfdc0",
+  "provenance": {
+    "dataset_url": "https://www.kaggle.com/datasets/charuchaudhry/plantvillage-tomato-leaf-dataset",
+    "handle": null,
+    "source": "drive_zip",
+    "resolved_root": "/content/aiot-data/plantvillage",
+    "code_sha256": "5aeff8959d22dca2002dc7fce54b37ae19e2f9943fed5a5d9a1909bc453e0695",
+    "observed_at": "2026-10-15T03:12:42.694047+00:00"
+  },
+  "train_class_counts": {
+    "0": 1190,
+    "1": 560,
+    "2": 1065,
+    "3": 532,
+    "4": 991,
+    "5": 938,
+    "6": 785,
+    "7": 2995,
+    "8": 209,
+    "9": 891
+  },
+  "class_weights": [
+    0.8534453511238098,
+    1.8135714530944824,
+    0.9536150097846985,
+    1.909022569656372,
+    1.0248234272003174,
+    1.0827292203903198,
+    1.2937579154968262,
+    0.3390984833240509,
+    4.859330177307129,
+    1.1398428678512573
+  ],
+  "environment": {
+    "python": "3.12.13",
+    "torch": "2.11.0+cu128",
+    "torchvision": "0.26.0+cu128",
+    "cuda": "12.8",
+    "device": "Tesla T4"
+  },
+  "limitations": "PlantVillage; chưa đánh giá ESP32-CAM; softmax chưa calibration/OOD.",
+  "best_epoch": 10,
+  "best_val_macro_f1": 0.9959839392564577,
+  "weights_sha256": "9f28c08576471e40d0b36f393e600df286edb5387b9734d15bd057e14e50d5f3"
+}
