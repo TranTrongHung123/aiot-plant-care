@@ -86,12 +86,10 @@ ml/**/checkpoints/
 ml/**/runs/
 ml/**/artifacts/
 ml/**/Ultralytics/
-*.pt
 *.pth
 *.onnx
 *.joblib
 *.pkl
-*.ubj
 *.ckpt
 *.safetensors
 *.h5
