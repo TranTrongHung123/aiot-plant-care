@@ -1,11 +1,13 @@
 import io
+import json
 import logging
+import urllib.request
 from typing import Annotated
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import inspect, select
 from starlette.concurrency import run_in_threadpool
@@ -25,6 +27,7 @@ from app.integrations.mqtt import bridge
 from app.integrations.storage import normalize_image, storage
 from app.integrations.weather import weather_inputs
 from app.modules.control import create_command
+from app.modules.stream_relay import stream_relay
 from app.modules.trained_ai import InferenceUnavailable, model_metadata, model_status
 from app.modules.weather_control import active_weather, enqueue_live_forecast
 
@@ -41,8 +44,10 @@ def authorize(
     credentials: Annotated[
         HTTPAuthorizationCredentials | None, Depends(HTTPBearer(auto_error=False))
     ],
+    token: str | None = None,
 ):
-    if not credentials or not valid_token(credentials.credentials):
+    key = credentials.credentials if credentials else token
+    if not key or not valid_token(key):
         raise HTTPException(401, "Khóa truy cập không hợp lệ")
 
 
@@ -265,3 +270,137 @@ def retry_job(job_id: str):
         item.status, item.error, item.attempts = "queued", None, 0
         item.lease_until, item.finished_at = None, None
         return serialize(item)
+
+
+@router.get("/stream/status")
+def get_stream_status():
+    """Lấy trạng thái luồng stream relay và thông tin suy luận AI thời gian thực."""
+    return stream_relay.get_status()
+
+
+@router.get("/stream/ai")
+def stream_ai(cam_url: str | None = Query(None), max_frames: int | None = Query(None)):
+    """Luồng video MJPEG có gắn nhãn và Bounding Box AI thời gian thực."""
+    if cam_url:
+        stream_relay.set_cam_url(cam_url)
+    return StreamingResponse(
+        stream_relay.generate_stream(mode="ai", max_frames=max_frames),
+        media_type="multipart/x-mixed-replace; boundary=frame",
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache"},
+    )
+
+
+@router.get("/stream/raw")
+def stream_raw(cam_url: str | None = Query(None), max_frames: int | None = Query(None)):
+    """Luồng video MJPEG gốc được trung chuyển qua Backend."""
+    if cam_url:
+        stream_relay.set_cam_url(cam_url)
+    return StreamingResponse(
+        stream_relay.generate_stream(mode="raw", max_frames=max_frames),
+        media_type="multipart/x-mixed-replace; boundary=frame",
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache"},
+    )
+
+
+@router.post("/stream/capture", status_code=202)
+async def capture_from_stream(
+    purpose: Annotated[str, Query(pattern="^(leaf|fruit|both)$")] = "both",
+):
+    """Trích xuất ảnh mới nhất từ luồng stream đang phát để gửi phân tích AI (không gián đoạn video)."""
+    jpeg_data = stream_relay.extract_snapshot()
+    if not jpeg_data:
+        raise HTTPException(
+            503,
+            "Luồng stream camera chưa sẵn sàng hoặc chưa có khung hình hợp lệ để chụp.",
+        )
+    if purpose == "both":
+        leaf_job = await run_in_threadpool(store_image, jpeg_data, "leaf")
+        fruit_job = await run_in_threadpool(store_image, jpeg_data, "fruit")
+        return {"leaf_job": leaf_job, "fruit_job": fruit_job}
+    else:
+        job = await run_in_threadpool(store_image, jpeg_data, purpose)
+        return {"job": job}
+
+
+@router.get("/stream/cam-status")
+def get_esp32_cam_status(cam_ip: str | None = Query(None)):
+    """Backend proxy lấy trạng thái ESP32-CAM để giải phóng tải kết nối trực tiếp từ trình duyệt."""
+    target_ip = (cam_ip or "10.213.128.82").strip()
+    target_ip = (
+        target_ip.replace("http://", "")
+        .replace("https://", "")
+        .split("/")[0]
+        .split(":")[0]
+    )
+    url = f"http://{target_ip}/status"
+    req = urllib.request.Request(
+        url, headers={"User-Agent": "PlantcareStreamRelay/1.0"}
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=8.0) as resp:
+            data = json.loads(resp.read().decode())
+            return data
+    except Exception as exc:
+        return {
+            "online": False,
+            "ip": target_ip,
+            "stream_enabled": False,
+            "detail": f"Không thể kết nối ESP32-CAM: {exc}",
+        }
+
+
+@router.post("/stream/toggle")
+def toggle_camera_stream(enable: bool = Query(...), cam_ip: str | None = Query(None)):
+    """Backend proxy bật/tắt luồng stream trên ESP32-CAM."""
+    target_ip = (cam_ip or "10.213.128.82").strip()
+    target_ip = (
+        target_ip.replace("http://", "")
+        .replace("https://", "")
+        .split("/")[0]
+        .split(":")[0]
+    )
+    action = "on" if enable else "off"
+    url = f"http://{target_ip}/stream/{action}"
+    req = urllib.request.Request(
+        url,
+        data=b"",
+        method="POST",
+        headers={"User-Agent": "PlantcareStreamRelay/1.0"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=8.0) as resp:
+            data = json.loads(resp.read().decode())
+            return {"ok": True, "cam_status": data}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=f"Không thể điều khiển ESP32-CAM: {exc}"
+        )
+
+
+@router.post("/stream/capture-esp32")
+def trigger_esp32_capture_now(cam_ip: str | None = Query(None)):
+    """Backend proxy yêu cầu ESP32-CAM chụp ảnh trực tiếp khi stream đang tắt."""
+    target_ip = (cam_ip or "10.213.128.82").strip()
+    target_ip = (
+        target_ip.replace("http://", "")
+        .replace("https://", "")
+        .split("/")[0]
+        .split(":")[0]
+    )
+    url = f"http://{target_ip}/capture-now"
+    req = urllib.request.Request(
+        url,
+        data=b"",
+        method="POST",
+        headers={"User-Agent": "PlantcareStreamRelay/1.0"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=12.0) as resp:
+            data = json.loads(resp.read().decode())
+            return {"ok": True, "cam_status": data}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=f"Không thể yêu cầu ESP32-CAM chụp: {exc}"
+        )
+
+

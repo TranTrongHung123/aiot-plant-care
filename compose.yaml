@@ -62,7 +62,7 @@ services:
     profiles: [local-mqtt]
     restart: unless-stopped
     ports:
-      - "127.0.0.1:${MQTT_LOCAL_PORT:-1883}:1883"
+      - "0.0.0.0:${MQTT_LOCAL_PORT:-1883}:1883"
     volumes:
       - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - mqtt-data:/mosquitto/data

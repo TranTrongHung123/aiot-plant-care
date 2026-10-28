@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import logging
+import time
 from contextlib import asynccontextmanager
 from uuid import uuid4
 
@@ -18,6 +19,7 @@ from app.db.models import Device, Policy, now
 from app.db.session import Session, engine
 from app.integrations.mqtt import bridge
 from app.modules.control import maintain
+from app.modules.stream_relay import stream_relay
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -121,3 +123,77 @@ async def realtime(websocket: WebSocket):
             await websocket.close(code=1013)
     except (WebSocketDisconnect, TimeoutError, RuntimeError, ValueError):
         return
+
+
+@app.websocket("/ws/stream")
+async def websocket_stream(websocket: WebSocket):
+    origin = websocket.headers.get("origin")
+    if origin and origin not in settings.cors_origins.split(","):
+        await websocket.close(code=1008)
+        return
+
+    token = websocket.query_params.get("token")
+    cam_url = websocket.query_params.get("cam_url")
+
+    await websocket.accept()
+
+    try:
+        # Xác thực: nếu không có trong query params, đợi bản tin JSON đầu tiên
+        if not token or not valid_token(token):
+            auth = await asyncio.wait_for(websocket.receive_json(), timeout=5)
+            if not isinstance(auth, dict) or not valid_token(auth.get("token")):
+                await websocket.close(code=1008)
+                return
+            if not cam_url and auth.get("cam_url"):
+                cam_url = auth.get("cam_url")
+
+        if cam_url:
+            stream_relay.set_cam_url(cam_url)
+
+        stream_relay.add_viewer()
+        last_sent_seq = -1
+        last_sent_ai_time = -1.0
+
+        async def reader_loop():
+            try:
+                while True:
+                    data = await websocket.receive_json()
+                    if isinstance(data, dict):
+                        if data.get("type") == "set_cam_url" and data.get("cam_url"):
+                            stream_relay.set_cam_url(data["cam_url"])
+                        elif data.get("type") == "ping":
+                            await websocket.send_json({"type": "pong", "timestamp": time.time()})
+            except Exception:
+                pass
+
+        reader_task = asyncio.create_task(reader_loop())
+
+        try:
+            while not reader_task.done():
+                raw_jpeg, seq, _ = stream_relay.get_latest_frame()
+                if raw_jpeg and seq != last_sent_seq:
+                    await websocket.send_bytes(raw_jpeg)
+                    last_sent_seq = seq
+
+                dets, leaf, ai_time = stream_relay.get_latest_ai_metadata()
+                if ai_time > 0 and ai_time != last_sent_ai_time:
+                    await websocket.send_json(
+                        {
+                            "type": "ai_overlay",
+                            "leaf": leaf,
+                            "fruits": dets,
+                            "timestamp": ai_time,
+                        }
+                    )
+                    last_sent_ai_time = ai_time
+
+                await asyncio.sleep(0.01)  # Tần số quét 100Hz (~10ms) đảm bảo frame gửi tức thì, triệt tiêu jitter
+        finally:
+            reader_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await reader_task
+    except (WebSocketDisconnect, TimeoutError, RuntimeError, ValueError):
+        pass
+    finally:
+        stream_relay.remove_viewer()
+
