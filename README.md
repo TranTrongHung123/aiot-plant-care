@@ -113,11 +113,66 @@ aiot-plant-care/
 - [Hợp đồng dữ liệu dự kiến](docs/contracts.md)
 - [Thời tiết DEMO/LIVE và lịch tưới lặp lại](docs/weather-modes.md)
 
-## 7. Trạng thái khởi tạo
+## 7. Hướng dẫn chạy dự án
 
-Đã triển khai **backend/frontend End-to-End với AI đã huấn luyện**: telemetry MQTT, dashboard
-WebSocket, tưới mô phỏng thủ công/tự động có ACK, upload ảnh MinIO và worker xử lý
-ba bài toán AI thật (CPU). Dữ liệu và lịch sử lưu thật bằng PostgreSQL/Alembic.
+### 7.1. Chạy trên Linux (Hạ tầng + Backend + Frontend)
+
+Yêu cầu: **Docker & Docker Compose**, **Python 3.12 + `uv`**, **Node.js + `npm`**.
+
+#### Bước 1: Khởi động hạ tầng (PostgreSQL, MinIO, Mosquitto MQTT)
+
+Chạy tại thư mục gốc của dự án:
+
+```bash
+# Tạo file .env từ mẫu nếu chưa có (chỉnh sửa mật khẩu và APP_TOKEN >= 16 ký tự)
+[ -f .env ] || cp .env.example .env
+
+# Build image MinIO (chỉ cần chạy lần đầu)
+docker compose build minio
+
+# Khởi động PostgreSQL, MinIO và MQTT Broker
+docker compose --profile local-mqtt up -d postgres minio mqtt
+
+# Khởi tạo bucket và tài khoản MinIO
+docker compose run --rm minio-init
+```
+
+#### Bước 2: Chạy Backend (FastAPI) & Worker AI
+
+Mở 2 terminal tại thư mục `backend/`:
+
+- **Terminal 1 — FastAPI Server** (bind `0.0.0.0` để ESP32 / ESP32-CAM trong mạng LAN có thể kết nối):
+  ```bash
+  cd backend
+  uv sync --locked
+  uv run alembic upgrade head
+  uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+  ```
+
+- **Terminal 2 — AI Inference Worker** (xử lý nhận diện bệnh lá MobileNetV3, quả YOLO và dự báo mưa XGBoost):
+  ```bash
+  cd backend
+  uv run python -m app.workers.inference
+  ```
+
+#### Bước 3: Chạy Frontend (Next.js)
+
+Mở 1 terminal tại thư mục `frontend/`:
+
+```bash
+cd frontend
+[ -f .env.local ] || cp .env.example .env.local
+npm install
+npm run dev
+```
+
+- **Web Dashboard:** `http://localhost:3000` (đăng nhập bằng `APP_TOKEN` trong file `.env`)
+- **API Docs (Swagger):** `http://localhost:8000/docs`
+- **MinIO Console:** `http://localhost:9001`
+
+---
+
+### 7.2. Chạy nhanh bản Demo trên Windows (kèm Simulator)
 
 Xem [hướng dẫn demo](docs/demo.md). Chạy từ thư mục gốc:
 
@@ -125,6 +180,6 @@ Xem [hướng dẫn demo](docs/demo.md). Chạy từ thư mục gốc:
 powershell -ExecutionPolicy Bypass -File scripts/start-demo.ps1
 ```
 
-Mở `http://localhost:3000`, dùng `APP_TOKEN` trong `.env`. Thiết bị vẫn là simulator.
+Mở `http://localhost:3000`, dùng `APP_TOKEN` trong `.env`.
 MobileNetV3/YOLO dùng artifact trong `model-artifacts/`; XGBoost cần cấu hình
 OpenWeather và đủ 6 mốc giờ quan trắc. Xem [tích hợp AI](docs/ai-integration.md).
