@@ -19,6 +19,7 @@ from app.db.models import Device, Policy, now
 from app.db.session import Session, engine
 from app.integrations.mqtt import bridge
 from app.modules.control import maintain
+from app.modules.monitoring import evaluate_monitoring
 from app.modules.stream_relay import stream_relay
 
 logging.basicConfig(level=logging.INFO)
@@ -32,6 +33,15 @@ async def scheduler():
         except Exception:
             log.exception("Control scheduler failed")
         await asyncio.sleep(2)
+
+
+async def monitor():
+    while True:
+        try:
+            await run_in_threadpool(evaluate_monitoring, bridge.connected, now())
+        except Exception as exc:
+            log.error("Monitoring evaluation failed: %s", type(exc).__name__)
+        await asyncio.sleep(settings.monitoring_interval_seconds)
 
 
 @asynccontextmanager
@@ -48,13 +58,17 @@ async def lifespan(app):
         if not db.get(Policy, 1):
             db.add(Policy(id=1))
     bridge.start()
-    task = asyncio.create_task(scheduler())
+    tasks = [asyncio.create_task(scheduler())]
+    if settings.monitoring_enabled:
+        tasks.append(asyncio.create_task(monitor()))
     try:
         yield
     finally:
-        task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await task
+        for task in tasks:
+            task.cancel()
+        for task in tasks:
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
         bridge.stop()
         lock.execute(text("SELECT pg_advisory_unlock(73419201)"))
         lock.close()
@@ -68,6 +82,14 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 app.include_router(router)
+if settings.chat_enabled:
+    from app.api.chat import router as chat_router
+
+    app.include_router(chat_router)
+if settings.monitoring_enabled:
+    from app.api.alerts import router as alert_router
+
+    app.include_router(alert_router)
 
 
 @app.exception_handler(SQLAlchemyError)

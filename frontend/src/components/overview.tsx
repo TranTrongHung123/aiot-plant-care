@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Dashboard, time } from "@/lib/api";
 import { nextSchedule } from "@/lib/overview";
 import { Icon } from "./dashboard";
+import { OverviewAlerts } from "./views/alerts";
 
 function SensorSparkline({
   values,
@@ -120,79 +121,6 @@ export function Overview({
   const leaf = data.jobs.find(
     (job) => job.task === "leaf" && job.status === "completed" && job.result,
   );
-  const alerts = [
-    ...(!apiOnline
-      ? [
-          {
-            title: "Mất kết nối backend",
-            text: "Đang hiển thị dữ liệu nhận được lần cuối.",
-            href: "/control",
-          },
-        ]
-      : []),
-    ...(stale
-      ? [
-          {
-            title: "Cảm biến chưa có dữ liệu mới",
-            text: "Kiểm tra kết nối trước khi đánh giá tình trạng đất.",
-            href: "/simulation",
-          },
-        ]
-      : []),
-    ...(!data.device.online
-      ? [
-          {
-            title: "Thiết bị ngoại tuyến",
-            text: "Thiết bị chưa sẵn sàng nhận lệnh tưới.",
-            href: "/control",
-          },
-        ]
-      : []),
-    ...(!data.mqtt_connected
-      ? [
-          {
-            title: "MQTT mất kết nối",
-            text: "Chưa thể trao đổi lệnh với thiết bị.",
-            href: "/control",
-          },
-        ]
-      : []),
-    ...(soil == null
-      ? [
-          {
-            title: "Chưa có độ ẩm đất hợp lệ",
-            text: "Không thể đánh giá ngưỡng tưới từ dữ liệu hiện có.",
-            href: "/control",
-          },
-        ]
-      : !stale && dry
-        ? [
-            {
-              title: "Độ ẩm đất dưới ngưỡng tưới",
-              text: `Hiện tại ${soil}% · Ngưỡng đã đặt ${data.policy.threshold}%.`,
-              href: "/control",
-            },
-          ]
-        : []),
-    ...(data.policy.enabled && !data.weather_control.available
-      ? [
-          {
-            title: "Thời tiết chưa sẵn sàng",
-            text: data.weather_control.reason,
-            href: "/schedule",
-          },
-        ]
-      : []),
-    ...(data.jobs.some((job) => job.status === "failed")
-      ? [
-          {
-            title: "Có tác vụ AI thất bại",
-            text: "Xem nguyên nhân và kết quả trong lịch sử phân tích.",
-            href: "/ai",
-          },
-        ]
-      : []),
-  ];
   const metrics = [
     {
       label: "Độ ẩm đất",
@@ -363,38 +291,14 @@ export function Overview({
           ))}
         </div>
       </section>
-      <section className="two-columns overview-bottom">
-        <article className="card alerts">
-          <div className="section-heading">
-            <h2 className="section-title">Cần chú ý</h2>
-            <span className="badge">{alerts.length} thông báo</span>
-          </div>
-          {alerts.length ? (
-            alerts.map((alert) => (
-              <Link className="alert-row" href={alert.href} key={alert.title}>
-                <span className="alert-mark" aria-hidden="true">
-                  !
-                </span>
-                <div>
-                  <h3>{alert.title}</h3>
-                  <p>{alert.text}</p>
-                </div>
-                <span aria-hidden="true">↗</span>
-              </Link>
-            ))
-          ) : (
-            <div className="clear-state">
-              <span className="clear-check" aria-hidden="true">
-                ✓
-              </span>
-              <h3>Chưa có cảnh báo vận hành</h3>
-              <p>
-                Cảm biến và kết nối hiện không có cảnh báo. Đây không phải kết
-                luận cây không mắc bệnh.
-              </p>
-            </div>
-          )}
-        </article>
+      <section
+        className={
+          data.features?.monitoring
+            ? "two-columns overview-bottom"
+            : "overview-bottom"
+        }
+      >
+        {data.features?.monitoring && <OverviewAlerts />}
         <article className="card device-summary">
           <div className="section-heading">
             <h2 className="section-title">Trạng thái thiết bị</h2>

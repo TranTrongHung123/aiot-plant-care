@@ -1,12 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ReactNode, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { Dashboard, time } from "@/lib/api";
 import { Icon } from "./dashboard";
 
-export const navigation = [
+type NavigationItem = {
+  id: string;
+  href: string;
+  icon: string;
+  label: string;
+  title: string;
+  description: string;
+  feature?: keyof NonNullable<Dashboard["features"]>;
+};
+
+const navigation: NavigationItem[] = [
   {
     id: "overview",
     href: "/",
@@ -40,6 +50,24 @@ export const navigation = [
     description: "Theo dõi lá, độ chín của quả và dự báo mưa.",
   },
   {
+    id: "chat",
+    feature: "chat",
+    href: "/chat",
+    icon: "chat",
+    label: "Trợ lý cây trồng",
+    title: "Trợ lý cây trồng",
+    description: "Hỏi về số đo, lịch tưới, dự báo mưa và kết quả phân tích.",
+  },
+  {
+    id: "alerts",
+    feature: "monitoring",
+    href: "/alerts",
+    icon: "bell",
+    label: "Cảnh báo",
+    title: "Cảnh báo",
+    description: "Xem sự cố đang diễn ra và lịch sử phục hồi.",
+  },
+  {
     id: "history",
     href: "/history",
     icon: "clock",
@@ -58,9 +86,11 @@ export const navigation = [
 ];
 
 function Sidebar({
+  items,
   close,
   logout,
 }: {
+  items: NavigationItem[];
   close?: () => void;
   logout: () => void;
 }) {
@@ -81,7 +111,7 @@ function Sidebar({
         </div>
       </div>
       <nav aria-label="Điều hướng chính">
-        {navigation.map((item) => (
+        {items.map((item) => (
           <Link
             key={item.id}
             href={item.href}
@@ -129,11 +159,21 @@ export function AppShell({
   logout: () => void;
 }) {
   const pathname = usePathname();
-  const current =
-    navigation.find((item) => item.href === pathname) ?? navigation[0];
+  const router = useRouter();
+  const requested = navigation.find((item) => item.href === pathname);
+  const current = requested ?? navigation[0];
+  const items = navigation.filter(
+    ({ feature }) => !feature || data.features?.[feature],
+  );
+  const featureDisabled =
+    !!requested?.feature && !data.features?.[requested.feature];
   const drawer = useRef<HTMLDialogElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (featureDisabled) router.replace("/");
+  }, [featureDisabled, router]);
+  if (featureDisabled) return null;
   const close = () => {
     drawer.current?.close();
     setOpen(false);
@@ -145,7 +185,7 @@ export function AppShell({
         Đến nội dung chính
       </a>
       <aside className="sidebar">
-        <Sidebar logout={logout} />
+        <Sidebar items={items} logout={logout} />
       </aside>
       <dialog
         ref={drawer}
@@ -159,7 +199,7 @@ export function AppShell({
         <button className="drawer-close button secondary" onClick={close}>
           Đóng menu ×
         </button>
-        <Sidebar close={close} logout={logout} />
+        <Sidebar items={items} close={close} logout={logout} />
       </dialog>
       <div className="workspace">
         <header className="topbar">

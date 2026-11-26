@@ -10,6 +10,8 @@ from app.modules.schedule import due_slot, latest_slot
 from app.modules.weather_control import active_weather
 
 ACTIVE = ("requested", "published", "accepted")
+RAIN_DEFER_SECONDS = 30
+RAIN_DEFER_MARKER = "Hoãn tưới chờ mưa"
 
 
 def event(command, status, reason=""):
@@ -24,7 +26,14 @@ def event(command, status, reason=""):
     ]
 
 
-def create_command(request: PumpRequest, bridge, origin="manual", schedule_at=None):
+def create_command(
+    request: PumpRequest,
+    bridge,
+    origin="manual",
+    schedule_at=None,
+    *,
+    allow_rain_catchup=False,
+):
     at = now()
     with Session.begin() as db:
         device = db.scalar(select(Device).where(Device.id == DEVICE_ID).with_for_update())
@@ -65,9 +74,15 @@ def create_command(request: PumpRequest, bridge, origin="manual", schedule_at=No
                 ):
                     raise HTTPException(409, "Lịch tưới đã đổi hoặc hết cửa sổ chạy")
                 weather_context = active_weather(db, at)
-                if not weather_context["available"] or weather_context["rain_expected"]:
+                if not weather_context["available"] or (
+                    weather_context["rain_expected"] and not allow_rain_catchup
+                ):
                     raise HTTPException(409, weather_context["reason"])
-                weather_context = {**weather_context, "schedule_at": schedule_at.isoformat()}
+                weather_context = {
+                    **weather_context,
+                    "schedule_at": schedule_at.isoformat(),
+                    **({"rain_catchup": True} if allow_rain_catchup else {}),
+                }
             previous = db.scalar(
                 select(Command)
                 .where(Command.action == "pump_on")
@@ -123,6 +138,7 @@ def maintain(bridge):
         policy = db.scalar(select(Policy).where(Policy.id == 1).with_for_update())
         reading = db.scalar(select(Reading).order_by(Reading.measured_at.desc()).limit(1))
         should_water = False
+        is_catchup = False
         slot = due_slot(policy, at)
         if not policy.enabled:
             policy.decision = "Chế độ thủ công; lịch tự động đang tắt"
@@ -133,9 +149,38 @@ def maintain(bridge):
             ):
                 policy.last_schedule_status = "skipped"
                 policy.last_schedule_reason = "Bỏ qua lịch: hết thời gian chờ dự báo LIVE hợp lệ"
-            policy.decision = "Đang chờ lịch tiếp theo"
-            if policy.last_schedule_reason:
-                policy.decision += f". Lần gần nhất: {policy.last_schedule_reason}"
+            elif (
+                policy.last_schedule_status == "skipped"
+                and policy.last_schedule_at is not None
+                and RAIN_DEFER_MARKER in (policy.last_schedule_reason or "")
+                and latest_slot(policy, at) == policy.last_schedule_at
+                and at >= policy.last_schedule_at + timedelta(seconds=RAIN_DEFER_SECONDS)
+            ):
+                slot = policy.last_schedule_at
+                if not reading or not fresh(reading.measured_at, at):
+                    policy.last_schedule_reason = (
+                        "Không tưới bù: cảm biến đã cũ sau thời gian chờ mưa"
+                    )
+                elif reading.readings.get("soil_moisture_pct") is None:
+                    policy.last_schedule_reason = (
+                        "Không tưới bù: chưa hiệu chuẩn cảm biến đất"
+                    )
+                elif reading.readings["soil_moisture_pct"] >= policy.threshold:
+                    policy.last_schedule_reason = (
+                        "Không tưới bù: đất đã đủ ẩm sau thời gian chờ mưa"
+                    )
+                else:
+                    should_water = True
+                    is_catchup = True
+                    policy.last_schedule_status = "checking"
+                    policy.last_schedule_reason = (
+                        "Đang kích hoạt tưới bù: hết thời gian chờ mưa nhưng đất vẫn khô"
+                    )
+                policy.decision = policy.last_schedule_reason
+            if not should_water:
+                policy.decision = "Đang chờ lịch tiếp theo"
+                if policy.last_schedule_reason:
+                    policy.decision += f". Lần gần nhất: {policy.last_schedule_reason}"
         else:
             # Claim once in DB before releasing the lock; never replay after restart.
             policy.last_schedule_at = slot
@@ -151,7 +196,10 @@ def maintain(bridge):
                 policy.last_schedule_status = "waiting_weather"
                 policy.decision = weather["reason"] + "; đang chờ trong cửa sổ lịch"
             elif weather["rain_expected"]:
-                policy.decision = weather["reason"]
+                policy.decision = (
+                    f"{weather['reason']} · {RAIN_DEFER_MARKER} "
+                    f"(sẽ tự kiểm tra tưới bù sau {RAIN_DEFER_SECONDS} giây nếu đất vẫn khô)"
+                )
             else:
                 should_water = True
                 policy.last_schedule_status = "checking"
@@ -167,10 +215,16 @@ def maintain(bridge):
                 bridge,
                 "automatic",
                 schedule_at=slot,
+                allow_rain_catchup=is_catchup,
             )
-            decision = "Đã yêu cầu tưới theo lịch: đất khô, không mưa, đủ điều kiện an toàn"
+            decision = (
+                "Đã yêu cầu tưới bù tự động: hết thời gian chờ mưa nhưng đất vẫn khô, đủ điều kiện an toàn"
+                if is_catchup
+                else "Đã yêu cầu tưới theo lịch: đất khô, không mưa, đủ điều kiện an toàn"
+            )
         except HTTPException as exc:
-            decision = f"Không tưới: {exc.detail}"
+            prefix = "Không tưới bù" if is_catchup else "Không tưới"
+            decision = f"{prefix}: {exc.detail}"
         with Session.begin() as db:
             policy = db.get(Policy, 1)
             if policy.last_schedule_at == slot:

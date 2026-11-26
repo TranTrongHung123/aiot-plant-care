@@ -5,11 +5,13 @@ import { API, Dashboard, Job, Policy, time } from "@/lib/api";
 export function Icon({ name, size = 22 }: { name: string; size?: number }) {
   const paths: Record<string, string> = {
     leaf: "M20 4C8 2 2 8 5 15c3 7 15 5 15-11ZM5 20 16 9M10 15v-5m0 5h5",
+    chat: "M20 15a2 2 0 0 1-2 2h-8l-5 4v-4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v9ZM7 9h9M7 12h6",
     grid: "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z",
     drop: "M12 3S5 11 5 15a7 7 0 0 0 14 0c0-4-7-12-7-12ZM8 15a4 4 0 0 0 4 4",
     sun: "M12 3v2m0 14v2M3 12h2m14 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0",
     image: "M3 4h18v16H3zM3 16l6-6 5 5 3-3 4 4M16 8h.01",
     clock: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M12 7v5l3 2",
+    bell: "M18 8a6 6 0 1 0-12 0c0 6-3 7-3 9h18c0-2-3-3-3-9ZM10 20a2 2 0 0 0 4 0",
     upload: "M12 16V3m-5 5 5-5 5 5M4 16v5h16v-5",
     cloud:
       "M6 17a5 5 0 0 1 0-10 7 7 0 0 1 13 2 4 4 0 0 1 0 8ZM8 20v1m5-1v1m5-1v1",

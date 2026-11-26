@@ -1,7 +1,21 @@
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+)
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -121,3 +135,100 @@ class WeatherControl(Base):
     mode: Mapped[str] = mapped_column(default="live")
     demo_rain: Mapped[bool] = mapped_column(default=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+chat_json = JSON().with_variant(JSONB(), "postgresql")
+
+
+class ChatConversation(Base):
+    __tablename__ = "chat_conversations"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    title: Mapped[str] = mapped_column(String(100), default="Hội thoại mới")
+    default_mode: Mapped[str] = mapped_column(String(8))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
+    turn_count: Mapped[int] = mapped_column(default=0)
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    __table_args__ = (UniqueConstraint("conversation_id", "turn", "role"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    conversation_id: Mapped[str] = mapped_column(
+        ForeignKey("chat_conversations.id", ondelete="CASCADE")
+    )
+    turn: Mapped[int]
+    role: Mapped[str] = mapped_column(String(10))
+    content: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(24))
+    details: Mapped[dict] = mapped_column("metadata", chat_json, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class ChatToolCall(Base):
+    __tablename__ = "chat_tool_calls"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    message_id: Mapped[str] = mapped_column(
+        ForeignKey("chat_messages.id", ondelete="CASCADE"), index=True
+    )
+    agent: Mapped[str] = mapped_column(String(24))
+    tool: Mapped[str] = mapped_column(String(16))
+    sanitized_args: Mapped[dict] = mapped_column(chat_json)
+    sanitized_result: Mapped[dict] = mapped_column(chat_json)
+    duration_ms: Mapped[int]
+    status: Mapped[str] = mapped_column(String(24))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class AgentAlert(Base):
+    __tablename__ = "agent_alerts"
+    __table_args__ = (
+        CheckConstraint(
+            "trigger_type = 'condition' OR (trigger_type = 'event' AND source_ref IS NOT NULL)",
+            name="ck_agent_alert_trigger",
+        ),
+        Index(
+            "uq_agent_alert_open_condition",
+            "device_id",
+            "kind",
+            unique=True,
+            postgresql_where=text("trigger_type = 'condition' AND resolved_at IS NULL"),
+            sqlite_where=text("trigger_type = 'condition' AND resolved_at IS NULL"),
+        ),
+        Index(
+            "uq_agent_alert_event",
+            "device_id",
+            "kind",
+            "source_ref",
+            unique=True,
+            postgresql_where=text("trigger_type = 'event'"),
+            sqlite_where=text("trigger_type = 'event'"),
+        ),
+        Index("ix_agent_alert_history", "device_id", "created_at", "id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    device_id: Mapped[str] = mapped_column(ForeignKey("devices.id", ondelete="CASCADE"))
+    kind: Mapped[str] = mapped_column(String(24))
+    trigger_type: Mapped[str] = mapped_column(String(9))
+    severity: Mapped[str] = mapped_column(String(8))
+    source_kind: Mapped[str] = mapped_column(String(16))
+    source_ref: Mapped[str | None] = mapped_column(String(80))
+    data_source: Mapped[str] = mapped_column(String(32))
+    evidence: Mapped[dict] = mapped_column(chat_json)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class MonitoringCheckpoint(Base):
+    __tablename__ = "monitoring_checkpoints"
+    device_id: Mapped[str] = mapped_column(
+        ForeignKey("devices.id", ondelete="CASCADE"), primary_key=True
+    )
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    command_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    command_id: Mapped[str] = mapped_column(String(36))
+    job_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    job_id: Mapped[str] = mapped_column(String(36))

@@ -5,7 +5,11 @@
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include <Adafruit_GFX.h>
+#ifdef OLED_SH1106
+#include <Adafruit_SH110X.h>
+#else
 #include <Adafruit_SSD1306.h>
+#endif
 #include <Adafruit_BMP085.h>
 #include <DHT.h>
 
@@ -39,10 +43,21 @@ static const char* TOPIC_STATUS    = "plantcare/v1/simulation/sim-esp32-01/statu
 static const char* TOPIC_ACK       = "plantcare/v1/simulation/sim-esp32-01/ack";
 static const char* TOPIC_COMMAND   = "plantcare/v1/simulation/sim-esp32-01/command";
 
-// Màn hình OLED SSD1306 128x64
+// Màn hình OLED I2C 128x64. Chọn driver trong platformio.ini.
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+constexpr uint8_t OLED_ADDRESS = 0x3C;
+constexpr uint32_t I2C_CLOCK_HZ = 100000;
+// Một gói I2C 128 byte mất gần 12 ms ở 100 kHz.
+constexpr uint16_t I2C_TIMEOUT_MS = 20;
+constexpr uint16_t OLED_WHITE = 1;
+#ifdef OLED_SH1106
+constexpr const char* OLED_DRIVER = "SH1106";
+Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1, I2C_CLOCK_HZ, I2C_CLOCK_HZ);
+#else
+constexpr const char* OLED_DRIVER = "SSD1306";
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1, I2C_CLOCK_HZ, I2C_CLOCK_HZ);
+#endif
 
 // Cảm biến & Mạng
 DHT dht(DHTPIN, DHTTYPE);
@@ -281,7 +296,7 @@ void renderDashboard() {
         return;
     }
     display.clearDisplay();
-    display.setTextColor(SSD1306_WHITE);
+    display.setTextColor(OLED_WHITE);
     display.setTextSize(1);
 
     // Dòng 1: Trạng thái Wi-Fi & MQTT
@@ -293,7 +308,7 @@ void renderDashboard() {
     } else {
         display.print("WIFI:OK | MQTT:ONLINE");
     }
-    display.drawLine(0, 9, 128, 9, SSD1306_WHITE);
+    display.drawLine(0, 9, SCREEN_WIDTH - 1, 9, OLED_WHITE);
 
     // Dòng 2: Nhiệt độ & Độ ẩm KK
     display.setCursor(0, 12);
@@ -312,7 +327,7 @@ void renderDashboard() {
     }
 
     // Dòng 5: Trạng thái Bơm
-    display.drawLine(0, 48, 128, 48, SSD1306_WHITE);
+    display.drawLine(0, 48, SCREEN_WIDTH - 1, 48, OLED_WHITE);
     display.setCursor(0, 53);
     if (pumpState) {
         unsigned long remSec = (pumpStopAtMs > millis()) ? ((pumpStopAtMs - millis() + 999) / 1000) : 0;
@@ -389,32 +404,48 @@ void setup() {
     bootId = generateUuidV4();
     Serial.printf("[BOOT] Boot ID: %s\n", bootId.c_str());
 
-    // 2. Khởi tạo I2C & OLED
-    Wire.begin(I2C_SDA, I2C_SCL);
-    Wire.setTimeOut(30);
+    // 2. Khởi tạo I2C & OLED (chỉ khởi tạo khi thiết bị thực sự phản hồi ACK = 0 trên bus I2C)
+    Wire.begin(I2C_SDA, I2C_SCL, I2C_CLOCK_HZ);
+    Wire.setTimeOut(I2C_TIMEOUT_MS);
 
-    oledAvailable = display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+    Wire.beginTransmission(OLED_ADDRESS);
+    bool oledAck = (Wire.endTransmission() == 0);
+    if (oledAck) {
+#ifdef OLED_SH1106
+        oledAvailable = display.begin(OLED_ADDRESS, false);
+#else
+        oledAvailable = display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS, false, false);
+#endif
+    }
     if (oledAvailable) {
-        Serial.println("[OLED] Da tim thay man hinh OLED SSD1306 tai dia chi 0x3C");
+        Serial.printf("[OLED] Driver %s 128x64: ACK 0x%02X, I2C %lu kHz\n",
+                      OLED_DRIVER, OLED_ADDRESS, (unsigned long)(I2C_CLOCK_HZ / 1000));
         display.clearDisplay();
         display.setTextSize(1);
-        display.setTextColor(SSD1306_WHITE);
+        display.setTextWrap(false);
+        display.setTextColor(OLED_WHITE);
         display.setCursor(8, 16);
         display.println("AIoT PLANT CARE");
         display.setCursor(8, 32);
         display.println("Ket noi Wi-Fi & NTP...");
         display.display();
+    } else if (oledAck) {
+        Serial.printf("[OLED] Khoi tao driver %s khong thanh cong\n", OLED_DRIVER);
     } else {
-        Serial.println("[OLED] Khong phat hien OLED SSD1306 (bo qua hien thi)");
+        Serial.printf("[OLED] Khong phat hien ACK tai 0x%02X\n", OLED_ADDRESS);
     }
 
     // 3. Khởi tạo BMP180 & DHT22
-    bmpAvailable = bmp.begin();
-    if (bmpAvailable) {
+    Wire.beginTransmission(0x77);
+    bool bmpAck = (Wire.endTransmission() == 0);
+    if (bmpAck && bmp.begin()) {
+        bmpAvailable = true;
+        Wire.setTimeOut(I2C_TIMEOUT_MS);
         Serial.printf("[BMP] Khoi tao BMP180 thanh cong! Ap suat: %.1f hPa\n",
                       bmp.readPressure() / 100.0f);
     } else {
-        Serial.println("[BMP] Chua phat hien BMP180 tai dia chi 0x77.");
+        bmpAvailable = false;
+        Serial.println("[BMP] Chua phat hien ACK tu BMP180 tai dia chi 0x77.");
     }
     dht.begin();
 
@@ -480,27 +511,26 @@ void loop() {
     if (nowMs - lastTelemetryMs >= 5000) {
         lastTelemetryMs = nowMs;
 
-        // Ping kiểm tra địa chỉ I2C 0x77 (BMP180) và 0x76 (BMP280)
+        // Ping kiểm tra địa chỉ I2C 0x77 (BMP180)
         int sdaVal = digitalRead(I2C_SDA);
         int sclVal = digitalRead(I2C_SCL);
         Wire.beginTransmission(0x77);
         byte err77 = Wire.endTransmission();
-        Wire.beginTransmission(0x76);
-        byte err76 = Wire.endTransmission();
 
-        Serial.printf("[I2C DIAG] SDA(21)=%d SCL(22)=%d | Ping 0x77 (BMP180): %d | Ping 0x76 (BMP280): %d\n",
-                      sdaVal, sclVal, err77, err76);
+        Serial.printf("[I2C DIAG] SDA(21)=%d SCL(22)=%d | Ping 0x77 (BMP180): %d\n",
+                      sdaVal, sclVal, err77);
 
-        if (err77 == 5 || err76 == 5) {
-            // Bus I2C bị kẹt (timeout), reset lại bộ điều khiển I2C
+        if (err77 == 5) {
+            // Bus I2C bị kẹt (timeout), khởi tạo lại với cùng cấu hình.
             Wire.end();
-            Wire.begin(I2C_SDA, I2C_SCL);
-            Wire.setTimeOut(30);
-        }
-
-        if (!bmpAvailable && bmp.begin()) {
-            bmpAvailable = true;
-            Serial.println("[BMP] >> Da tu dong phat hien va ket noi BMP180 thanh cong!");
+            Wire.begin(I2C_SDA, I2C_SCL, I2C_CLOCK_HZ);
+            Wire.setTimeOut(I2C_TIMEOUT_MS);
+        } else if (err77 == 0 && !bmpAvailable) {
+            if (bmp.begin()) {
+                bmpAvailable = true;
+                Wire.setTimeOut(I2C_TIMEOUT_MS);
+                Serial.println("[BMP] >> Da tu dong phat hien va ket noi BMP180 thanh cong!");
+            }
         }
         sampleAndPublishTelemetry();
     }

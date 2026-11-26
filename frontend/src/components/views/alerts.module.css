@@ -1,0 +1,70 @@
+.history {
+  min-width: 0;
+}
+
+.toolbar,
+.labels,
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.toolbar h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.filter select {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--foreground);
+  font: inherit;
+}
+
+.items {
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+
+.item h3,
+.item p {
+  margin: 7px 0;
+}
+
+.details,
+.pagination {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 620px) {
+  .item {
+    flex-direction: column;
+  }
+
+  .filter {
+    margin-left: 0;
+  }
+}

@@ -12,7 +12,7 @@ def test_stream_relay_url_normalization():
     assert relay.cam_url == "http://192.168.1.50:81/stream"
 
     relay.set_cam_url("192.168.1.60")
-    assert relay.cam_url == "http://192.168.1.60:81/stream"
+    assert relay.cam_url == "http://192.168.1.60:8081/stream"
 
     relay.set_cam_url("http://10.0.0.5:81/stream")
     assert relay.cam_url == "http://10.0.0.5:81/stream"

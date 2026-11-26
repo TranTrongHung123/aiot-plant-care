@@ -78,6 +78,7 @@ def dashboard():
         return {
             "source": "simulation",
             "ai_provider": "trained",
+            "features": {"chat": settings.chat_enabled, "monitoring": settings.monitoring_enabled},
             "models": model_status(),
             "weather_status": weather_status,
             "weather_control": active_weather(db, at),

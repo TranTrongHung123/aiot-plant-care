@@ -1,0 +1,375 @@
+{
+  "version": "plant-knowledge-v1",
+  "documents": [
+    {
+      "id": "hdu-tomato",
+      "title": "Kỹ thuật trồng và chăm sóc cây cà chua",
+      "publisher": "Đại học Hồng Đức",
+      "scope": "ngoài ruộng",
+      "revision": "bản tham chiếu v1",
+      "url": "https://media.hdu.edu.vn/Media/2011_nln.hdu.edu.vn/FolderFunc/202402/Documents/kt-trong-ca-chua-ts-tran-thi-huyen-20240204112403-e.pdf"
+    },
+    {
+      "id": "isu-container",
+      "title": "Growing Tomatoes in Containers",
+      "publisher": "Iowa State University Extension",
+      "scope": "trồng chậu",
+      "revision": "2024-04",
+      "url": "https://yardandgarden.extension.iastate.edu/how-to/growing-tomatoes-containers"
+    },
+    {
+      "id": "knvn-late-blight",
+      "title": "Bản tin Khuyến nông Việt Nam số 03/2018",
+      "publisher": "Trung tâm Khuyến nông Quốc gia",
+      "scope": "ngoài ruộng",
+      "revision": "2018-03",
+      "url": "https://khuyennongvn.gov.vn/portals/0/tailieu/2018/11/hangweb/tap_chi_khuyen_nong_so_032018.pdf"
+    },
+    {
+      "id": "umn-spots",
+      "title": "Tomato leaf spot diseases",
+      "publisher": "University of Minnesota Extension",
+      "scope": "vườn gia đình",
+      "revision": "2018",
+      "url": "https://extension.umn.edu/garden-and-home/yard-and-garden/gardening-in-minnesota/yard-and-garden-problems/tomato-leaf-spot-diseases"
+    },
+    {
+      "id": "umn-leaf-mold",
+      "title": "Tomato leaf mold",
+      "publisher": "University of Minnesota Extension",
+      "scope": "nhà màng",
+      "revision": "bản tham chiếu v1",
+      "url": "https://extension.umn.edu/agriculture/specialty-crops/vegetable-farming/disease-management/tomato-leaf-mold"
+    },
+    {
+      "id": "uf-target",
+      "title": "Target Spot of Tomato in Florida (PP351)",
+      "publisher": "University of Florida IFAS Extension",
+      "scope": "ngoài ruộng",
+      "revision": "2024-05",
+      "url": "https://ask.ifas.ufl.edu/publication/PP351/pdf"
+    },
+    {
+      "id": "uc-leaf-curl",
+      "title": "Tomato Yellow Leaf Curl",
+      "publisher": "UC Statewide IPM Program",
+      "scope": "ngoài ruộng",
+      "revision": "2013-12",
+      "url": "https://ipm.ucanr.edu/agriculture/tomato/tomato-yellow-leaf-curl/"
+    },
+    {
+      "id": "umn-viruses",
+      "title": "Tomato viruses",
+      "publisher": "University of Minnesota Extension",
+      "scope": "cà chua",
+      "revision": "2026",
+      "url": "https://extension.umn.edu/agriculture/specialty-crops/vegetable-farming/disease-management/tomato-viruses"
+    },
+    {
+      "id": "uc-spider-mites",
+      "title": "Spider Mites",
+      "publisher": "UC Statewide IPM Program",
+      "scope": "vườn gia đình",
+      "revision": "bản tham chiếu v1",
+      "url": "https://ipm.ucanr.edu/home-and-landscape/spider-mites/"
+    },
+    {
+      "id": "project-contracts",
+      "title": "Hợp đồng dữ liệu AIoT Plant Care",
+      "publisher": "AIoT Plant Care",
+      "scope": "thiết bị",
+      "revision": "Phase 2",
+      "path": "docs/contracts.md"
+    },
+    {
+      "id": "project-alerts",
+      "title": "Giám sát và cảnh báo Phase 2",
+      "publisher": "AIoT Plant Care",
+      "scope": "cảnh báo",
+      "revision": "Phase 2",
+      "path": "docs/monitoring-alerts.md"
+    }
+  ],
+  "passages": [
+    {
+      "id": "growing",
+      "document": "hdu-tomato",
+      "section": "Mục 1, 3 và 5.3–5.4, trang 1–4",
+      "topic": "care",
+      "aliases": [
+        "trồng cà chua",
+        "chăm sóc cà chua",
+        "ươm cà chua",
+        "cây giống cà chua",
+        "làm giàn",
+        "tỉa nhánh",
+        "tỉa chồi",
+        "cà chua cần nắng",
+        "điều kiện trồng"
+      ],
+      "answer": "Khi chọn cây giống, ưu tiên cây khỏe, ngọn phát triển tốt và rễ giữ được bầu. Quy trình ngoài ruộng trong tài liệu hướng dẫn chuẩn bị giàn đỡ cho giống thân cao khoảng 35–40 ngày sau trồng và tỉa nhánh theo kiểu sinh trưởng của giống."
+    },
+    {
+      "id": "container-watering",
+      "document": "isu-container",
+      "section": "Containers, Growing Media và Care → Watering",
+      "topic": "pot",
+      "aliases": [
+        "cà chua trồng chậu",
+        "cà chua trong chậu",
+        "trồng chậu",
+        "tưới chậu",
+        "tưới cây trồng chậu",
+        "giá thể",
+        "đất khô",
+        "kiểm tra đất",
+        "đất trong chậu",
+        "tưới cà chua",
+        "tưới nước",
+        "thoát nước",
+        "chậu cà chua",
+        "bao lâu tưới"
+      ],
+      "answer": "Kiểm tra giá thể trong chậu và các lỗ thoát nước. Giá thể cần giữ ẩm và thoát được nước dư. Khi cần tưới, tưới đủ để nước xuống tới đáy chậu rồi để nước dư thoát ra. Chậu ngoài nắng và gió có thể khô nhanh hơn."
+    },
+    {
+      "id": "container-harvest",
+      "document": "isu-container",
+      "section": "Harvest",
+      "topic": "harvest",
+      "aliases": [
+        "thu hoạch",
+        "hái quả",
+        "hái cà chua",
+        "nên hái",
+        "hái được",
+        "hái chưa",
+        "hái ăn",
+        "dấu hiệu quả chín",
+        "nhận biết cà chua chín",
+        "nhận biết quả chín",
+        "quả chuyển màu",
+        "độ chín để hái"
+      ],
+      "answer": "Để chọn quả hái, quan sát màu có đều khắp quả theo đặc điểm của giống và sờ nhẹ xem quả đã hơi mềm. Quả còn cứng thường cần thêm thời gian. Một số giống chín có màu khác đỏ."
+    },
+    {
+      "id": "bacterial-spot",
+      "document": "umn-spots",
+      "section": "What to look for? và Bacterial speck and spot",
+      "topic": "leaf",
+      "leaf_label": "Tomato___Bacterial_spot",
+      "aliases": [
+        "đốm vi khuẩn",
+        "bacterial spot",
+        "đốm lá vi khuẩn",
+        "xanthomonas"
+      ],
+      "answer": "Kiểm tra đốm tròn sẫm ở các lá thấp, thân và quả. Đốm vi khuẩn và một số bệnh khác có thể nhìn rất giống trên lá. Nếu quả cũng có đốm, quan sát các vết đen nổi và kích thước của chúng để có thêm dấu hiệu đối chiếu."
+    },
+    {
+      "id": "early-blight",
+      "document": "umn-spots",
+      "section": "What to look for? và What to do about tomato leaf spots",
+      "topic": "leaf",
+      "leaf_label": "Tomato___Early_blight",
+      "aliases": [
+        "đốm lá sớm",
+        "cháy lá sớm",
+        "early blight",
+        "alternaria solani"
+      ],
+      "answer": "Kiểm tra các lá già gần gốc trước, tìm vết tròn nâu hoặc đen trên lá. Đốm lá sớm, Septoria và đốm vi khuẩn có thể giống nhau khi mới xuất hiện. Ghi lại lá nào xuất hiện vết trước và quan sát thêm thân, quả để đối chiếu."
+    },
+    {
+      "id": "septoria",
+      "document": "umn-spots",
+      "section": "What to look for? và What to do about tomato leaf spots",
+      "topic": "leaf",
+      "leaf_label": "Tomato___Septoria_leaf_spot",
+      "aliases": [
+        "septoria",
+        "septoria leaf spot",
+        "đốm lá septoria",
+        "septoria lycopersici"
+      ],
+      "answer": "Quan sát lá thấp gần mặt đất để tìm các đốm tròn nâu hoặc đen. Septoria dễ nhầm với các bệnh tạo đốm khác khi vết còn nhỏ. Đối chiếu ảnh minh họa Septoria trong tài liệu và theo dõi xem các đốm có xuất hiện trên lá cao hơn hay không."
+    },
+    {
+      "id": "late-blight",
+      "document": "knvn-late-blight",
+      "section": "Bệnh sương mai cà chua → Triệu chứng, trang 24",
+      "topic": "leaf",
+      "leaf_label": "Tomato___Late_blight",
+      "aliases": [
+        "mốc sương",
+        "sương mai",
+        "late blight",
+        "phytophthora infestans"
+      ],
+      "answer": "Kiểm tra mép và chóp lá xem có vết xám xanh lan vào phiến rồi chuyển nâu đen hay không. Lật lá để tìm lớp mốc trắng ở mặt dưới quanh vết. Có thể xem thêm thân và quả để đối chiếu với mô tả của tài liệu."
+    },
+    {
+      "id": "late-blight-management",
+      "document": "knvn-late-blight",
+      "section": "Bệnh sương mai cà chua → Biện pháp phòng chống, trang 24",
+      "topic": "leaf_management",
+      "leaf_label": "Tomato___Late_blight",
+      "aliases": ["mốc sương", "sương mai"],
+      "answer": "Với cây đã có dấu hiệu mốc sương, việc trước mắt là hạn chế lây lan. Bạn có thể thu gom riêng phần lá, thân hoặc quả đã bị bệnh và dọn sạch tàn dư quanh cây. Kiểm tra chậu hoặc luống thoát nước tốt để tránh đọng nước. Nếu bệnh đã lan sang nhiều lá, thân hoặc quả, hãy nhờ cán bộ khuyến nông địa phương xem mức độ bệnh và tư vấn cách xử lý phù hợp."
+    },
+    {
+      "id": "leaf-mold",
+      "document": "umn-leaf-mold",
+      "section": "How to tell tomato leaf mold from other issues",
+      "topic": "leaf",
+      "leaf_label": "Tomato___Leaf_Mold",
+      "aliases": [
+        "mốc lá",
+        "nấm mốc lá",
+        "leaf mold",
+        "passalora fulva",
+        "cladosporium fulvum"
+      ],
+      "answer": "Tìm đốm vàng nhạt ở mặt trên, nhất là trên lá già. Lật lá xem có lớp mốc mịn màu ô liu đến nâu đúng dưới đốm hay không. Đây là dấu hiệu để đối chiếu giữa hai mặt của cùng một lá."
+    },
+    {
+      "id": "target-spot",
+      "document": "uf-target",
+      "section": "Symptoms, trang 1",
+      "topic": "leaf",
+      "leaf_label": "Tomato___Target_Spot",
+      "aliases": [
+        "target spot",
+        "corynespora",
+        "corynespora cassiicola"
+      ],
+      "answer": "Quan sát các vết nâu nhỏ trên lá. Khi lớn, tâm vết có thể nhạt màu và có vòng sẫm ở ngoài. Vết dễ giống đốm lá sớm hoặc đốm vi khuẩn. Nếu có quả, kiểm tra thêm vết nâu lõm để đối chiếu."
+    },
+    {
+      "id": "spot-comparison",
+      "document": "uf-target",
+      "section": "Symptoms, trang 1",
+      "topic": "leaf_compare",
+      "aliases": [
+        "đốm vòng",
+        "đốm đồng tâm",
+        "vòng đồng tâm",
+        "đốm hình bia"
+      ],
+      "answer": "Vết có vòng đồng tâm có thể gặp ở Target Spot và dễ nhầm với đốm lá sớm. Quan sát thêm tâm vết, rìa sẫm và vết lõm trên quả để đối chiếu. Chỉ tên gọi đốm vòng chưa đủ để chọn một nhãn."
+    },
+    {
+      "id": "yellow-leaf-curl",
+      "document": "uc-leaf-curl",
+      "section": "Symptoms and Signs",
+      "topic": "leaf",
+      "leaf_label": "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
+      "aliases": [
+        "xoăn vàng lá",
+        "vàng xoăn lá",
+        "lá xoăn vàng",
+        "xoăn lá vàng",
+        "yellow leaf curl",
+        "tylcv"
+      ],
+      "answer": "Kiểm tra xem lá non có nhỏ, nhăn, cong lên và vàng ở mép hoặc giữa gân hay không. Quan sát thêm đốt thân ngắn và cây chậm lớn. Các dấu hiệu này giúp chọn cây cần kiểm tra kỹ hơn."
+    },
+    {
+      "id": "tomato-mosaic",
+      "document": "umn-viruses",
+      "section": "Quick facts và How to tell viruses from other tomato issues",
+      "topic": "leaf",
+      "leaf_label": "Tomato___Tomato_mosaic_virus",
+      "aliases": [
+        "khảm cà chua",
+        "khảm lá",
+        "khảm lá cà chua",
+        "tomato mosaic",
+        "tomv"
+      ],
+      "answer": "Đối chiếu các mảng xanh đậm và xanh nhạt xen kẽ trên lá, lá nhỏ hoặc biến dạng và cây chậm lớn. Nhiều virus tạo triệu chứng gần giống nhau. Muốn xác định đúng tác nhân cần xét nghiệm mẫu."
+    },
+    {
+      "id": "spider-mites",
+      "document": "uc-spider-mites",
+      "section": "Identification và Damage",
+      "topic": "leaf",
+      "leaf_label": "Tomato___Spider_mites Two-spotted_spider_mite",
+      "aliases": [
+        "nhện đỏ",
+        "nhện đỏ hai chấm",
+        "nhện hai chấm",
+        "spider mites",
+        "tetranychus urticae"
+      ],
+      "answer": "Lật lá và dùng kính lúp để tìm các chấm rất nhỏ di chuyển cùng lớp tơ mịn. Đối chiếu với những chấm nhạt li ti ở nơi lá bị hại. Quan sát mặt dưới lá giúp kiểm tra gợi ý nhện đỏ trên ảnh."
+    },
+    {
+      "id": "sensor-reading",
+      "document": "project-contracts",
+      "section": "MQTT → Telemetry",
+      "topic": "iot",
+      "aliases": [
+        "cảm biến báo 0",
+        "độ ẩm 0",
+        "độ ẩm đất 0",
+        "độ ẩm báo 0",
+        "số đo 0",
+        "hiệu chuẩn cảm biến",
+        "số đo adc",
+        "soil moisture raw",
+        "giá trị thô",
+        "đọc cảm biến"
+      ],
+      "answer": "Dữ liệu cảm biến có giá trị thô và trường phần trăm độ ẩm đất. Trường phần trăm có thể để trống khi chưa hiệu chuẩn. Khi số đo bất thường, đối chiếu giá trị thô, thời điểm đo và tình trạng giá thể trước khi dựa vào con số phần trăm."
+    },
+    {
+      "id": "command-ack",
+      "document": "project-contracts",
+      "section": "MQTT → ACK",
+      "topic": "iot",
+      "aliases": [
+        "ack là gì",
+        "phản hồi ack",
+        "lỗi ack",
+        "timeout nghĩa là gì",
+        "hết thời gian chờ phản hồi",
+        "xác nhận của mqtt",
+        "phản hồi lệnh tưới"
+      ],
+      "answer": "Trạng thái hoàn tất cần phản hồi từ thiết bị. Hết thời gian chờ cho biết chưa nhận được kết quả đúng hạn, còn ACK đến muộn được lưu để đối chiếu. Xác nhận truyền bản tin từ broker có ý nghĩa riêng."
+    },
+    {
+      "id": "alert-states",
+      "document": "project-alerts",
+      "section": "Cần chú ý, Đánh dấu đã xem và Đã phục hồi",
+      "topic": "alerts",
+      "aliases": [
+        "đã xem là gì",
+        "đã xem khác",
+        "đã phục hồi",
+        "đánh dấu đã xem nghĩa là gì",
+        "cảnh báo phục hồi",
+        "trạng thái cảnh báo"
+      ],
+      "answer": "Đã xem ghi lại lần xác nhận đầu tiên của người dùng. Đã phục hồi xuất hiện khi backend nhận đủ bằng chứng điều kiện đã phục hồi. Dùng lịch sử cảnh báo để đối chiếu thời điểm của hai trạng thái."
+    },
+    {
+      "id": "connection-check",
+      "document": "project-alerts",
+      "section": "Ngưỡng mặc định và Dashboard và trợ lý",
+      "topic": "alerts",
+      "aliases": [
+        "mất kết nối cần kiểm tra",
+        "mất kết nối nên kiểm tra",
+        "kiểm tra esp32 mất kết nối",
+        "esp32 mất kết nối",
+        "dữ liệu cũ là gì",
+        "số đo cũ là gì",
+        "cảnh báo mất kết nối nghĩa là gì"
+      ],
+      "answer": "Đối chiếu thời điểm trạng thái thiết bị cuối và thời điểm số đo cuối. Cảnh báo số đo cũ áp dụng khi thiết bị còn online nhưng chưa gửi mẫu mới. ESP32 và simulator dùng chung định danh demo, nên đối chiếu nguồn nào đang phát."
+    }
+  ]
+}

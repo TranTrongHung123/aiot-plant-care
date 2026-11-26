@@ -674,4 +674,87 @@
     font-size: 12px;
     padding: 9px 10px;
   }
+  .schedule-watering-alert {
+    top: 68px;
+    right: 16px;
+    left: 16px;
+    max-width: none;
+  }
+}
+.schedule-watering-alert {
+  position: fixed;
+  top: 82px;
+  right: 24px;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: min(460px, calc(100vw - 32px));
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 2px solid var(--green);
+  background: #f0f8ec;
+  color: #164028;
+  box-shadow: 0 12px 32px #1c3a2726;
+}
+.schedule-watering-alert.is-watering {
+  border-color: #1f7a4c;
+  background: #e3f5ea;
+}
+.schedule-watering-alert.is-completed {
+  border-color: var(--green);
+  background: #f3f9ee;
+}
+.schedule-watering-alert.is-blocked {
+  border-color: #c96a2b;
+  background: #fff4eb;
+  color: #5c2808;
+}
+.schedule-watering-alert.is-blocked .schedule-watering-icon {
+  background: #c96a2b;
+}
+.schedule-watering-alert.is-blocked .schedule-watering-close {
+  color: #5c2808;
+}
+.schedule-watering-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--green);
+  color: #fff;
+  flex-shrink: 0;
+}
+.schedule-watering-alert.is-watering .schedule-watering-icon {
+  animation: schedule-pulse 1.2s ease-in-out infinite;
+}
+.schedule-watering-body {
+  display: grid;
+  gap: 3px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.schedule-watering-body strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+.schedule-watering-close {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: #164028;
+  font-size: 20px;
+  line-height: 1;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+@keyframes schedule-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
 }

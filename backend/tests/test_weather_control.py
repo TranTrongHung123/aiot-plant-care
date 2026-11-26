@@ -163,3 +163,67 @@ def test_automatic_command_rechecks_weather_under_lock(monkeypatch, available, r
             "automatic",
             schedule_at=at,
         )
+
+
+def test_rain_deferral_triggers_catchup_after_30s_when_soil_stays_dry(monkeypatch):
+    from contextlib import nullcontext
+
+    from app.modules import control
+
+    at = datetime(2026, 10, 15, 11, tzinfo=UTC)
+    scheduled = policy(threshold=30, duration_seconds=2, cooldown_seconds=30, decision="")
+    scheduled.last_schedule_reason = ""
+    device = SimpleNamespace(online=True, last_seen=at, pump="off")
+    reading = SimpleNamespace(measured_at=at, readings={"soil_moisture_pct": 18})
+    published = []
+    bridge = SimpleNamespace(connected=True, publish=lambda topic, payload: published.append((topic, payload)))
+
+    class FakeDB:
+        def scalar(self, stmt):
+            s = str(stmt)
+            if "irrigation_policies" in s:
+                return scheduled
+            if "sensor_readings" in s:
+                return reading
+            if "devices" in s:
+                return device
+            return None
+
+        def scalars(self, stmt):
+            return []
+
+        def get(self, model, pk):
+            return scheduled if model.__name__ == "Policy" else None
+
+        def add(self, obj):
+            pass
+
+    monkeypatch.setattr(control, "Session", SimpleNamespace(begin=lambda: nullcontext(FakeDB())))
+    monkeypatch.setattr(
+        control,
+        "active_weather",
+        lambda *_: {
+            "available": True,
+            "rain_expected": True,
+            "source": "demo_scenario",
+            "reason": "DEMO có mưa: chặn tưới tự động",
+        },
+    )
+
+    # 1. Tại đúng mốc lịch: hoãn tưới chờ mưa, chưa phát lệnh MQTT.
+    monkeypatch.setattr(control, "now", lambda: at)
+    control.maintain(bridge)
+    assert scheduled.last_schedule_status == "skipped"
+    assert "Hoãn tưới chờ mưa" in scheduled.last_schedule_reason
+    assert not published
+
+    # 2. Sau 30 giây chờ mưa mà cảm biến đất vẫn khô (18% < 30%): tự động kích hoạt tưới bù.
+    later = at + timedelta(seconds=31)
+    device.last_seen = reading.measured_at = later
+    monkeypatch.setattr(control, "now", lambda: later)
+    control.maintain(bridge)
+    assert scheduled.last_schedule_status == "requested"
+    assert "tưới bù" in scheduled.last_schedule_reason.lower()
+    assert len(published) == 1
+    assert published[0][1]["action"] == "pump_on"
+    assert published[0][1]["duration_ms"] == 2000

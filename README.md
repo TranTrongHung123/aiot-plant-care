@@ -113,6 +113,12 @@ aiot-plant-care/
 - [Hợp đồng dữ liệu dự kiến](docs/contracts.md)
 - [Thời tiết DEMO/LIVE và lịch tưới lặp lại](docs/weather-modes.md)
 
+Trợ lý, tra cứu tài liệu và cảnh báo multi-agent mặc định tắt. Đặt `CHAT_ENABLED=true` để bật Trợ lý và RAG, hoặc `MONITORING_ENABLED=true` để bật Cảnh báo trong `.env`, rồi khởi động lại backend.
+
+- [Trợ lý cây trồng và benchmark Phase 1](docs/chat-phase-1.md)
+- [Giám sát và cảnh báo Phase 2](docs/monitoring-alerts.md)
+- [Tra cứu tài liệu cà chua Phase 3](docs/plant-knowledge.md)
+
 ## 7. Hướng dẫn chạy dự án
 
 ### 7.1. Chạy trên Linux (Hạ tầng + Backend + Frontend)

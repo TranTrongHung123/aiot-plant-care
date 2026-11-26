@@ -1,6 +1,7 @@
 from pathlib import Path
+from typing import Literal
 
-from pydantic import model_validator
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
 
@@ -34,6 +35,24 @@ class Settings(BaseSettings):
     demo_mqtt_host: str = "127.0.0.1"
     demo_mqtt_port: int = 1883
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+    chat_enabled: bool = False
+    chat_default_mode: Literal["cloud", "local", "auto"] = "cloud"
+    chat_auto_preference: Literal["cloud", "local"] = "cloud"
+    chat_cloud_model: str = "gpt-5.4-nano"
+    chat_cloud_api_key: SecretStr = SecretStr("")
+    chat_local_base_url: str = "http://127.0.0.1:11434"
+    chat_local_model: str = "qwen3.5:4b-q4_K_M"
+    chat_timeout_seconds: int = Field(default=35, ge=5, le=45)
+    chat_max_output_tokens: int = Field(default=256, ge=64, le=1024)
+    chat_rate_limit_per_minute: int = Field(default=12, ge=1, le=120)
+    monitoring_enabled: bool = False
+    monitoring_interval_seconds: int = Field(default=5, ge=1, le=60)
+    monitoring_offline_seconds: int = Field(default=45, gt=20, le=3600)
+    monitoring_stale_seconds: int = Field(default=30, gt=20, le=3600)
+    monitoring_dry_seconds: int = Field(default=120, ge=20, le=3600)
+    monitoring_cooldown_seconds: int = Field(default=60, ge=0, le=86400)
+    monitoring_leaf_score: float = Field(default=0.80, gt=0, le=1, allow_inf_nan=False)
+    monitoring_leaf_cooldown_minutes: int = Field(default=15, ge=1, le=1440)
 
     @model_validator(mode="after")
     def simulation_only(self):

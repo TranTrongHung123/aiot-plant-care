@@ -70,6 +70,7 @@ export type WeatherControl = {
   model_version: string | null;
 };
 export type Dashboard = {
+  features?: { chat: boolean; monitoring: boolean };
   weather_control: WeatherControl;
   weather_status: { available: boolean; reason: string };
   server_time: string;
