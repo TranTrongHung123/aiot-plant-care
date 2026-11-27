@@ -405,3 +405,32 @@ def trigger_esp32_capture_now(cam_ip: str | None = Query(None)):
         )
 
 
+@router.post("/stream/interval")
+def set_esp32_capture_interval(
+    minutes: int = Query(..., ge=1, le=1440),
+    cam_ip: str | None = Query(None),
+):
+    """Cập nhật chu kỳ chụp ảnh định kỳ (phút) cho ESP32-CAM và luồng tự động."""
+    target_ip = (cam_ip or "10.213.128.82").strip()
+    target_ip = (
+        target_ip.replace("http://", "")
+        .replace("https://", "")
+        .split("/")[0]
+        .split(":")[0]
+    )
+    seconds = minutes * 60
+    url = f"http://{target_ip}/interval?seconds={seconds}"
+    req = urllib.request.Request(
+        url,
+        data=b"",
+        method="POST",
+        headers={"User-Agent": "PlantcareStreamRelay/1.0"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=6.0) as resp:
+            data = json.loads(resp.read().decode())
+            return {"ok": True, "interval_minutes": minutes, "cam_status": data}
+    except Exception:
+        return {"ok": True, "interval_minutes": minutes, "cam_status": None}
+
+

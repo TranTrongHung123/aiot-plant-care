@@ -123,13 +123,13 @@ def ensure_live_weather_ready():
 
         try:
             inputs = weather_inputs(db, reference + timedelta(minutes=5))
+            engine = predictor("weather", meta["model_version"])
             import pandas as pd
             import xgboost as xgb
             from weather_training.adapters import snapshots_to_hourly
             from weather_training.calibration import calibrate
             from weather_training.features import build_features
 
-            engine = predictor("weather", meta["model_version"])
             hourly_df = snapshots_to_hourly(inputs["snapshots"], as_of=inputs["as_of"])
             ref_ts = pd.Timestamp(inputs["as_of"])
             features = build_features(hourly_df, engine.config).loc[[ref_ts]]

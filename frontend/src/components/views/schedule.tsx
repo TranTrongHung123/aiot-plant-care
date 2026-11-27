@@ -70,27 +70,19 @@ export function ScheduleView() {
       (targetCmd?.duration_ms ?? data.policy.duration_seconds * 1000) / 1000,
     ),
   );
-  const reasonText = data.policy.last_schedule_reason || data.policy.decision;
-  const isCatchupCmd =
-    Boolean(targetCmd?.weather_context?.rain_catchup) ||
-    reasonText.toLowerCase().includes("tưới bù");
-  const originLabel = isCatchupCmd
-    ? "Tưới bù tự động"
-    : targetCmd?.origin === "automatic"
+  const originLabel =
+    targetCmd?.origin === "automatic"
       ? "Tự động theo lịch"
       : targetCmd?.origin === "manual"
         ? "Thủ công"
         : "Đang bật";
 
-  const blockedTitle = reasonText.includes("Hoãn tưới chờ mưa")
-    ? "Tạm hoãn tưới chờ mưa (Kiểm tra tưới bù sau 30s)"
-    : reasonText.includes("Không tưới bù: đất đã đủ ẩm")
-      ? "Hủy tưới bù (Đất đã đủ ẩm sau thời gian chờ mưa)"
-      : reasonText.toLowerCase().includes("mưa")
-        ? "Đã chặn tưới tự động (Dự báo có mưa)"
-        : reasonText.toLowerCase().includes("độ ẩm đất đủ")
-          ? "Bỏ qua tưới theo lịch (Đất đã đủ ẩm)"
-          : "Đã chặn tưới theo lịch";
+  const reasonText = data.policy.last_schedule_reason || data.policy.decision;
+  const blockedTitle = reasonText.toLowerCase().includes("mưa")
+    ? "Đã chặn tưới tự động (Dự báo có mưa)"
+    : reasonText.toLowerCase().includes("độ ẩm đất đủ")
+      ? "Bỏ qua tưới theo lịch (Đất đã đủ ẩm)"
+      : "Đã chặn tưới theo lịch";
   const blockedIcon = reasonText.toLowerCase().includes("mưa")
     ? "cloud"
     : "clock";

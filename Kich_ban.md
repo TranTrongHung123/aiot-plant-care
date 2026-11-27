@@ -51,7 +51,7 @@
 - Cho thầy xem các chỉ số nhiệt độ (**DHT22**), áp suất (**BMP180**) và độ ẩm đất từ mạch ESP32 đang truyền về trực tiếp mỗi 5 giây.
 - Bấm **`Tưới ngay`** (`3 giây`) để kiểm tra phần cứng: Relay đóng bật máy bơm thật, chạy đủ 3 giây rồi tự ngắt và báo `Hoàn tất` về Web.
 
-### Bước 2: Demo Tưới tự động & Kịch bản Hoãn mưa – Tưới bù (`/schedule`)
+### Bước 2: Demo Tưới tự động thông minh theo Độ ẩm đất & Dự báo mưa (`/schedule`)
 Bật **Tự động theo lịch (chu kỳ `1 phút`, ngưỡng đất `30%`)** và demo lần lượt 3 tình huống:
 
 1. **Tình huống 1 — Điều kiện bình thường (Đất khô + Dự báo không mưa $\rightarrow$ Tưới ngay)**:
@@ -60,9 +60,9 @@ Bật **Tự động theo lịch (chu kỳ `1 phút`, ngưỡng đất `30%`)** 
 2. **Tình huống 2 — Đất đã đủ độ ẩm (`>= 30%`) $\rightarrow$ Bỏ qua**:
    - Nhúng đầu dò cảm biến đất vào nước/đất ẩm (`> 30%`).
    - Khi đến mốc kiểm tra: Hệ thống thấy độ ẩm đất đã đủ nên **bỏ qua lần tưới này**.
-3. **Tình huống 3 (Quan trọng) — AI dự báo CÓ MƯA $\rightarrow$ Hoãn tưới, sau đó đất vẫn khô $\rightarrow$ Tự động tưới bù**:
-   - **Giai đoạn A (Hoãn tưới chờ mưa)**: Lau khô đầu dò cảm biến đất (`< 30%`), chọn dự báo thời tiết **`Có mưa`**. Khi đến mốc lịch, mặc dù đất đang khô nhưng vì dự báo sắp mưa nên hệ thống **hoãn/chặn chưa tưới** để chờ mưa tự nhiên.
-   - **Giai đoạn B (Hết thời gian chờ nhưng chưa mưa, đất vẫn khô $\rightarrow$ Tưới bù)**: Sau khoảng thời gian chờ (1 phút tiếp theo), trời thực tế không mưa (chuyển trạng thái sang **`Không mưa`**) và cảm biến xác nhận **đất vẫn còn khô (`< 30%`)** $\rightarrow$ Hệ thống **tự động kích hoạt bật bơm tưới bù** cho cây.
+3. **Tình huống 3 — AI dự báo CÓ MƯA $\rightarrow$ Chặn tưới tự động**:
+   - Lau khô đầu dò cảm biến đất (`< 30%`), chọn dự báo thời tiết **`Có mưa`**.
+   - Khi đến mốc lịch, mặc dù đất đang khô nhưng vì dự báo sắp mưa nên hệ thống **chặn không bật bơm** để tiết kiệm nước và tránh ngập úng rễ cây.
 
 ### Bước 3: Demo ESP32-CAM Livestream & AI Phân tích Lá / Quả (`/ai`)
 - Mở **Livestream trực tiếp từ ESP32-CAM** trên giao diện Web để quan sát cây theo thời gian thực.

@@ -371,7 +371,19 @@ void ensureNetworkAndMqtt() {
             char willBuf[320];
             serializeJson(willDoc, willBuf, sizeof(willBuf));
 
-            Serial.printf("[MQTT] Dang ket noi Broker %s:%d ...\n", MQTT_HOST, MQTT_PORT);
+            static char dynamicMqttHost[24];
+            IPAddress localIp = WiFi.localIP();
+            IPAddress cfgIp;
+            const char* targetHost = MQTT_HOST;
+            if (cfgIp.fromString(MQTT_HOST) &&
+                (localIp[0] != cfgIp[0] || localIp[1] != cfgIp[1] || localIp[2] != cfgIp[2])) {
+                snprintf(dynamicMqttHost, sizeof(dynamicMqttHost), "%u.%u.%u.%u",
+                         localIp[0], localIp[1], localIp[2], cfgIp[3]);
+                targetHost = dynamicMqttHost;
+            }
+            mqttClient.setServer(targetHost, MQTT_PORT);
+
+            Serial.printf("[MQTT] Dang ket noi Broker %s:%d ...\n", targetHost, MQTT_PORT);
             if (mqttClient.connect(clientId.c_str(), nullptr, nullptr,
                                    TOPIC_STATUS, 1, true, willBuf)) {
                 Serial.println("[MQTT] Ket noi thanh cong! Dang ky nhan lenh command...");

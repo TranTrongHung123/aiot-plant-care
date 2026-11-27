@@ -33,8 +33,8 @@
 #define FLASH_LED_PIN      4   // Đèn Flash trắng (Mặc định tắt: LOW)
 #define STATUS_LED_PIN    33   // Đèn LED đỏ mặt sau (Active-LOW)
 
-// Chu kỳ chụp tự động: 30 phút = 1.800.000 ms
-static const unsigned long CAPTURE_INTERVAL_MS = 30UL * 60UL * 1000UL;
+// Chu kỳ chụp tự động (mặc định 30 phút = 1.800.000 ms, có thể thay đổi động từ Dashboard)
+static volatile unsigned long captureIntervalMs = 30UL * 60UL * 1000UL;
 
 // Trạng thái vận hành 2 chế độ
 static SemaphoreHandle_t camMutex = nullptr;
@@ -66,10 +66,10 @@ static void setCorsHeaders(httpd_req_t* req) {
 static unsigned long getNextCaptureSeconds() {
     unsigned long nowMs = millis();
     unsigned long elapsed = nowMs - lastCaptureMs;
-    if (elapsed >= CAPTURE_INTERVAL_MS) {
+    if (elapsed >= captureIntervalMs) {
         return 0;
     }
-    return (CAPTURE_INTERVAL_MS - elapsed) / 1000UL;
+    return (captureIntervalMs - elapsed) / 1000UL;
 }
 
 static void buildStatusJson(char* outBuf, size_t outSize) {
@@ -84,7 +84,7 @@ static void buildStatusJson(char* outBuf, size_t outSize) {
              ipStr.c_str(),
              streamEnabled ? "true" : "false",
              ipStr.c_str(),
-             CAPTURE_INTERVAL_MS / 1000UL,
+             captureIntervalMs / 1000UL,
              getNextCaptureSeconds(),
              (unsigned int)uploadCount,
              lastUploadOk ? "true" : "false",
@@ -95,11 +95,22 @@ static void buildStatusJson(char* outBuf, size_t outSize) {
 
 // Gửi 1 khung ảnh JPEG lên Backend qua HTTP POST multipart/form-data
 static int uploadFrameToBackend(const uint8_t* jpgBuf, size_t jpgLen, const char* purpose) {
+    static char dynamicBackendHost[24];
+    IPAddress localIp = WiFi.localIP();
+    IPAddress cfgIp;
+    const char* targetHost = BACKEND_HOST;
+    if (cfgIp.fromString(BACKEND_HOST) &&
+        (localIp[0] != cfgIp[0] || localIp[1] != cfgIp[1] || localIp[2] != cfgIp[2])) {
+        snprintf(dynamicBackendHost, sizeof(dynamicBackendHost), "%u.%u.%u.%u",
+                 localIp[0], localIp[1], localIp[2], cfgIp[3]);
+        targetHost = dynamicBackendHost;
+    }
+
     WiFiClient client;
     client.setTimeout(5000);
-    if (!client.connect(BACKEND_HOST, BACKEND_PORT, 4000)) {
+    if (!client.connect(targetHost, BACKEND_PORT, 4000)) {
         Serial.printf("[UPLOAD] Khong ket noi duoc Backend %s:%d (purpose=%s)\n",
-                      BACKEND_HOST, BACKEND_PORT, purpose);
+                      targetHost, BACKEND_PORT, purpose);
         return -1;
     }
 
@@ -111,7 +122,7 @@ static int uploadFrameToBackend(const uint8_t* jpgBuf, size_t jpgLen, const char
     size_t totalLen = head.length() + jpgLen + tail.length();
 
     client.printf("POST /api/v1/images?purpose=%s HTTP/1.1\r\n", purpose);
-    client.printf("Host: %s:%d\r\n", BACKEND_HOST, BACKEND_PORT);
+    client.printf("Host: %s:%d\r\n", targetHost, BACKEND_PORT);
     client.printf("Authorization: Bearer %s\r\n", APP_TOKEN);
     client.printf("Content-Type: multipart/form-data; boundary=%s\r\n", boundary.c_str());
     client.printf("Content-Length: %u\r\n", (unsigned int)totalLen);
@@ -301,6 +312,30 @@ static esp_err_t captureNowHandler(httpd_req_t* req) {
     return httpd_resp_send(req, json, strlen(json));
 }
 
+static esp_err_t intervalHandler(httpd_req_t* req) {
+    setCorsHeaders(req);
+    httpd_resp_set_hdr(req, "Connection", "close");
+    char query[96] = {0};
+    char valBuf[24] = {0};
+    unsigned long newSeconds = 0;
+    if (httpd_req_get_url_query_str(req, query, sizeof(query)) == ESP_OK) {
+        if (httpd_query_key_value(query, "seconds", valBuf, sizeof(valBuf)) == ESP_OK) {
+            newSeconds = (unsigned long)atol(valBuf);
+        } else if (httpd_query_key_value(query, "minutes", valBuf, sizeof(valBuf)) == ESP_OK) {
+            newSeconds = (unsigned long)atol(valBuf) * 60UL;
+        }
+    }
+    if (newSeconds >= 10UL && newSeconds <= 86400UL) {
+        captureIntervalMs = newSeconds * 1000UL;
+        lastCaptureMs = millis();
+        Serial.printf(">> [CONFIG] Cap nhat chu ky chup dinh ky: %lu giay\n", newSeconds);
+    }
+    httpd_resp_set_type(req, "application/json");
+    char json[512];
+    buildStatusJson(json, sizeof(json));
+    return httpd_resp_send(req, json, strlen(json));
+}
+
 static esp_err_t indexHandler(httpd_req_t* req) {
     setCorsHeaders(req);
     httpd_resp_set_hdr(req, "Connection", "close");
@@ -402,21 +437,25 @@ static void startCameraServers() {
         httpd_uri_t streamOnUri   = { .uri = "/stream/on",   .method = HTTP_POST,    .handler = streamOnHandler,   .user_ctx = nullptr };
         httpd_uri_t streamOffUri  = { .uri = "/stream/off",  .method = HTTP_POST,    .handler = streamOffHandler,  .user_ctx = nullptr };
         httpd_uri_t captureNowUri = { .uri = "/capture-now", .method = HTTP_POST,    .handler = captureNowHandler, .user_ctx = nullptr };
+        httpd_uri_t intervalUri   = { .uri = "/interval",    .method = HTTP_POST,    .handler = intervalHandler,   .user_ctx = nullptr };
 
         httpd_uri_t optStatusUri  = { .uri = "/status",      .method = HTTP_OPTIONS, .handler = optionsHandler,    .user_ctx = nullptr };
         httpd_uri_t optOnUri      = { .uri = "/stream/on",   .method = HTTP_OPTIONS, .handler = optionsHandler,    .user_ctx = nullptr };
         httpd_uri_t optOffUri     = { .uri = "/stream/off",  .method = HTTP_OPTIONS, .handler = optionsHandler,    .user_ctx = nullptr };
         httpd_uri_t optCapUri     = { .uri = "/capture-now", .method = HTTP_OPTIONS, .handler = optionsHandler,    .user_ctx = nullptr };
+        httpd_uri_t optIntUri     = { .uri = "/interval",    .method = HTTP_OPTIONS, .handler = optionsHandler,    .user_ctx = nullptr };
 
         httpd_register_uri_handler(ctrlHttpd, &indexUri);
         httpd_register_uri_handler(ctrlHttpd, &statusUri);
         httpd_register_uri_handler(ctrlHttpd, &streamOnUri);
         httpd_register_uri_handler(ctrlHttpd, &streamOffUri);
         httpd_register_uri_handler(ctrlHttpd, &captureNowUri);
+        httpd_register_uri_handler(ctrlHttpd, &intervalUri);
         httpd_register_uri_handler(ctrlHttpd, &optStatusUri);
         httpd_register_uri_handler(ctrlHttpd, &optOnUri);
         httpd_register_uri_handler(ctrlHttpd, &optOffUri);
         httpd_register_uri_handler(ctrlHttpd, &optCapUri);
+        httpd_register_uri_handler(ctrlHttpd, &optIntUri);
         Serial.println("[HTTP] Control Server da mo tai cong 80.");
     }
 
@@ -554,7 +593,7 @@ void loop() {
 
     // Nếu Livestream đang BẬT: Backend tự trích xuất snapshot trực tiếp từ stream
     // Chỉ upload HTTP định kỳ khi Livestream đang TẮT hoặc khi có lệnh bấm chụp thủ công
-    if (captureRequested || (!streamEnabled && (nowMs - lastCaptureMs >= CAPTURE_INTERVAL_MS))) {
+    if (captureRequested || (!streamEnabled && (nowMs - lastCaptureMs >= captureIntervalMs))) {
         captureRequested = false;
         Serial.println(">> [SCHEDULE/CMD] Thuc hien chup anh & gui 2 tac vu AI (leaf + fruit)...");
         captureAndUploadBothTasks();

@@ -34,7 +34,9 @@ type AiOverlayMessage = {
 };
 
 const CAM_IP_STORAGE_KEY = "plantcare_esp32_cam_ip";
-const DEFAULT_CAM_IP = "10.213.128.82";
+const CAM_INTERVAL_STORAGE_KEY = "plantcare_esp32_cam_interval_min";
+const DEFAULT_CAM_IP = "10.206.13.82";
+const DEFAULT_CAPTURE_INTERVAL_MIN = 30;
 
 function formatCountdown(sec: number | undefined): string {
   if (sec === undefined || sec < 0) return "--:--";
@@ -69,8 +71,22 @@ export function AiView() {
   const [camStatus, setCamStatus] = useState<CamStatus | null>(null);
   const [camOnline, setCamOnline] = useState<boolean>(false);
   const [camBusy, setCamBusy] = useState<boolean>(false);
-  const [streamNonce, setStreamNonce] = useState<number>(0);
   const [streamMode, setStreamMode] = useState<"ai" | "raw">("ai");
+  const [captureIntervalMin, setCaptureIntervalMin] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = Number(
+        window.localStorage.getItem(CAM_INTERVAL_STORAGE_KEY),
+      );
+      if (Number.isFinite(saved) && saved >= 1 && saved <= 1440) return saved;
+    }
+    return DEFAULT_CAPTURE_INTERVAL_MIN;
+  });
+  const [intervalInput, setIntervalInput] = useState<number>(
+    () => captureIntervalMin,
+  );
+  const [localCountdown, setLocalCountdown] = useState<number>(
+    () => captureIntervalMin * 60,
+  );
   const [streamStats, setStreamStats] = useState<{
     running?: boolean;
     active_fruits_count?: number;
@@ -151,8 +167,6 @@ export function AiView() {
 
   useEffect(() => {
     if (!cleanCamIp) {
-      setCamOnline(false);
-      setCamStatus(null);
       return;
     }
     let cancelled = false;
@@ -185,6 +199,41 @@ export function AiView() {
     };
   }, [cleanCamIp, token]);
 
+  useEffect(() => {
+    const tick = window.setInterval(() => {
+      setLocalCountdown((prev) => {
+        if (prev <= 1) return captureIntervalMin * 60;
+        return prev - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(tick);
+  }, [captureIntervalMin]);
+
+  const saveCaptureInterval = async () => {
+    const clamped = Math.min(1440, Math.max(1, Math.round(intervalInput || 1)));
+    setIntervalInput(clamped);
+    setCaptureIntervalMin(clamped);
+    setLocalCountdown(clamped * 60);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(CAM_INTERVAL_STORAGE_KEY, String(clamped));
+    }
+    await act(async () => {
+      const res = await request<{
+        ok: boolean;
+        interval_minutes: number;
+        cam_status?: CamStatus | null;
+      }>(
+        `/stream/interval?minutes=${clamped}&cam_ip=${encodeURIComponent(cleanCamIp)}`,
+        token,
+        { method: "POST" },
+      );
+      if (res?.cam_status) {
+        setCamStatus(res.cam_status);
+        setCamOnline(true);
+      }
+    }, `Đã cập nhật chu kỳ chụp ảnh định kỳ thành ${clamped} phút/lần.`);
+  };
+
   const toggleStream = async (enable: boolean) => {
     if (!cleanCamIp) return;
     setCamBusy(true);
@@ -194,7 +243,6 @@ export function AiView() {
         token,
         { method: "POST" },
       );
-      setStreamNonce(Date.now());
       if (res?.cam_status) {
         setCamStatus(res.cam_status);
         setCamOnline(true);
@@ -362,14 +410,18 @@ export function AiView() {
         <p className="muted">
           XGBoost cho thời tiết, MobileNetV3 cho lá, YOLO cho quả. Hỗ trợ
           ESP32-CAM 2 chế độ: Livestream bật/tắt theo yêu cầu & chụp tự động
-          30 phút/lần gửi đồng thời cả 2 tác vụ AI (Lá + Quả).
+          định kỳ ({captureIntervalMin} phút/lần) gửi đồng thời cả 2 tác vụ AI
+          (Lá + Quả).
         </p>
       </section>
       <article className="card" style={{ marginBottom: "1.25rem" }}>
         <div className="section-heading">
           <div>
             <span className="eyebrow">CAMERA VƯỜN · AI-THINKER OV2640</span>
-            <h3>ESP32-CAM · Livestream & Chụp Tự Động (30 phút/lần)</h3>
+            <h3>
+              ESP32-CAM · Livestream & Chụp Tự Động ({captureIntervalMin}{" "}
+              phút/lần)
+            </h3>
           </div>
           <span className={`badge ${camOnline ? "ok" : "mock"}`}>
             {camOnline
@@ -547,12 +599,54 @@ export function AiView() {
           </div>
 
           <div>
-            <h4>Chế độ 2 · Chụp định kỳ 30 phút/lần (Lá + Quả)</h4>
+            <h4>
+              Chế độ 2 · Chụp định kỳ {captureIntervalMin} phút/lần (Lá + Quả)
+            </h4>
             <p className="small muted">
-              Mỗi 30 phút ESP32-CAM tự động chụp 1 ảnh JPEG mới và gửi đồng thời
-              tới cả 2 model AI: <strong>MobileNetV3 (Bệnh lá)</strong> và{" "}
+              Mỗi {captureIntervalMin} phút ESP32-CAM tự động chụp 1 ảnh JPEG
+              mới và gửi đồng thời tới cả 2 model AI:{" "}
+              <strong>MobileNetV3 (Bệnh lá)</strong> và{" "}
               <strong>YOLOv8 (Độ chín quả)</strong>.
             </p>
+            <div
+              style={{
+                display: "flex",
+                gap: "0.5rem",
+                alignItems: "center",
+                flexWrap: "wrap",
+                marginTop: "0.6rem",
+              }}
+            >
+              <label
+                className="small muted"
+                htmlFor="capture-interval-min-input"
+              >
+                Chu kỳ chụp (phút):
+              </label>
+              <input
+                id="capture-interval-min-input"
+                aria-label="Chu kỳ chụp định kỳ (phút)"
+                type="number"
+                min={1}
+                max={1440}
+                value={intervalInput}
+                onChange={(e) => setIntervalInput(Number(e.target.value))}
+                style={{
+                  width: "90px",
+                  padding: "0.4rem 0.6rem",
+                  borderRadius: "8px",
+                  border: "1px solid var(--line, #cbd5e1)",
+                }}
+              />
+              <button
+                type="button"
+                className="button secondary"
+                disabled={busy || camBusy}
+                onClick={() => void saveCaptureInterval()}
+              >
+                Lưu chu kỳ
+              </button>
+            </div>
             <div
               style={{
                 marginTop: "0.75rem",
@@ -564,9 +658,15 @@ export function AiView() {
               <p className="small" style={{ margin: "0 0 0.35rem 0" }}>
                 ⏱ Lần chụp tự động tiếp theo sau:{" "}
                 <strong>
-                  {formatCountdown(camStatus?.next_capture_in_seconds)}
+                  {formatCountdown(
+                    camOnline &&
+                      camStatus?.next_capture_in_seconds !== undefined &&
+                      camStatus.interval_seconds === captureIntervalMin * 60
+                      ? camStatus.next_capture_in_seconds
+                      : localCountdown,
+                  )}
                 </strong>{" "}
-                (chu kỳ 30 phút)
+                (chu kỳ {captureIntervalMin} phút)
               </p>
               <p className="small muted" style={{ margin: "0 0 0.35rem 0" }}>
                 Tổng số tác vụ AI đã gửi:{" "}
